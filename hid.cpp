@@ -8,7 +8,7 @@
 // TODO: add more cool stuff
 
 
-#ifdef WIN32
+#ifdef __MINGW32__
     #include <utility>
 
     #include <Windows.h>
@@ -191,7 +191,7 @@ int main(void)
     uint8_t buf[32] = { 0 };
     int i;
     HID::Device dev { VENDOR_ID, PRODUCT_ID, 0x61, 0xFF60 };
-#ifdef WIN32
+#ifdef __MINGW32__
     CAudioEndpointVolumeCallback callback = [&](float volume) {
         // wtf happens to buf[0]????
         buf[1] = 0x1;
