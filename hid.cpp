@@ -3,7 +3,10 @@
 #include <cstdlib>
 #include <hidapi.h>
 
-#define WIN32
+// TODO: handle disconnects
+// TODO: linux
+// TODO: add more cool stuff
+
 
 #ifdef WIN32
     #include <utility>
