@@ -7,7 +7,6 @@
 // TODO: linux
 // TODO: add more cool stuff
 
-
 #ifdef __MINGW32__
     #include <utility>
 
@@ -116,12 +115,12 @@ END:
     }
 #endif
 
-#define UNUSED(x)       static_cast<void>(x)
 #define VENDOR_ID       0x320F
 #define PRODUCT_ID      0x5044
 
 class HID {
 public:
+    static HID hid;
     HID() {
         if(hid_init())
             abort();
@@ -136,13 +135,6 @@ public:
     public:
         hid_device *handle { nullptr };
         Device(uint16_t vid, uint16_t pid, uint16_t usage, uint16_t usage_page) {
-            // handle = hid_open(vid, pid, NULL);
-            // if(!handle)
-            //     abort();
-
-            // wchar_t product[32];
-            // hid_get_product_string(handle, product, 32);
-            // printf("connected to %S\n", product);
             struct hid_device_info *devs = hid_enumerate(vid, pid);
             struct hid_device_info *cur_dev = devs;
             const char *path { nullptr };
@@ -183,8 +175,6 @@ public:
         }
     };
 };
-
-static HID hid;
 
 int main(void)
 {
