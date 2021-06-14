@@ -11,7 +11,7 @@
 // TODO: linux
 // TODO: add more cool stuff
 
-#define __MINGW32__
+// #define __MINGW32__
 
 #ifdef __MINGW32__
     #include <utility>
