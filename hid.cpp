@@ -1,11 +1,17 @@
 #include <cstdio>
 #include <cstdint>
 #include <cstdlib>
+#include <iostream>
+#include <optional>
 #include <hidapi.h>
+#include <libusb.h>
 
+// TODO: send current volume first, before callback register
 // TODO: handle disconnects
 // TODO: linux
 // TODO: add more cool stuff
+
+#define __MINGW32__
 
 #ifdef __MINGW32__
     #include <utility>
@@ -27,12 +33,7 @@
         {
         }
 
-        ~CAudioEndpointVolumeCallback()
-        {
-        }
-
         // IUnknown methods -- AddRef, Release, and QueryInterface
-
         ULONG STDMETHODCALLTYPE AddRef()
         {
             return InterlockedIncrement(&_cRef);
@@ -41,7 +42,7 @@
         ULONG STDMETHODCALLTYPE Release()
         {
             ULONG ulRef = InterlockedDecrement(&_cRef);
-            if (0 == ulRef)
+            if (ulRef == 0)
             {
                 delete this;
             }
@@ -99,13 +100,13 @@
 
         pAudioEndpointVolume->RegisterControlChangeNotify(callback);
 
-        // block
-        while(1)
-            Sleep(1000);
+        return;
 #undef ON_ERROR
 END:
-        if(pAudioEndpointVolume)
+        if(pAudioEndpointVolume) {
             pAudioEndpointVolume->Release();
+            pAudioEndpointVolume->UnregisterControlChangeNotify(callback);
+        }
         if(pDevice)
             pDevice->Release();
         if(pDeviceEnumerator)
@@ -114,9 +115,6 @@ END:
         CoUninitialize();
     }
 #endif
-
-#define VENDOR_ID       0x320F
-#define PRODUCT_ID      0x5044
 
 class HID {
 public:
@@ -132,9 +130,14 @@ public:
 
     class Device {
     private:
+        hid_device *m_handle { nullptr };
+
+        Device(hid_device *handle) : m_handle(handle)
+        {
+        }
+
     public:
-        hid_device *handle { nullptr };
-        Device(uint16_t vid, uint16_t pid, uint16_t usage, uint16_t usage_page) {
+        static std::optional<Device> construct(uint16_t vid, uint16_t pid, uint16_t usage, uint16_t usage_page) {
             struct hid_device_info *devs = hid_enumerate(vid, pid);
             struct hid_device_info *cur_dev = devs;
             const char *path { nullptr };
@@ -148,49 +151,103 @@ public:
             }
 
             if(!path)
-                abort();
+                return {};
 
             printf("open path -> %s\n", path);
-            handle = hid_open_path(path);
+            hid_device *handle = hid_open_path(path);
             if(!handle)
-                abort();
+                return {};
 
             wchar_t product[32];
             hid_get_product_string(handle, product, 32);
             printf("connected to %S\n", product);
 
             hid_free_enumeration(devs);
+
+            return std::make_optional(HID::Device(handle));
         }
 
-        ~Device() {
-            hid_close(handle);
-        }
+        // ~Device() {
+        //     hid_close(m_handle);
+        // }
 
         int write(uint8_t *buf, int size) {
-            return hid_write(handle, buf, size);
+            return hid_write(m_handle, buf, size);
         }
 
         int read(uint8_t *buf, int size) {
-            return hid_read(handle, buf, size);
+            return hid_read(m_handle, buf, size);
+        }
+
+        const wchar_t* error() {
+            return hid_error(m_handle);
         }
     };
 };
 
+
+#define VENDOR_ID       0x320F
+#define PRODUCT_ID      0x5044
+#define USAGE           0x61
+#define USAGE_PAGE      0xFF60
+
 int main(void)
 {
-    uint8_t buf[32] = { 0 };
-    int i;
-    HID::Device dev { VENDOR_ID, PRODUCT_ID, 0x61, 0xFF60 };
+    // WINDOWS NO HOTPLUG SUPPORT YEP
+    // https://github.com/libusb/libusb/issues/86
+#ifndef __MINGW32__
+    libusb_hotplug_callback_handle callback_handle;
+    libusb_init(nullptr);
+
+    auto libusb_callback = [](struct libusb_context *ctx,
+                              struct libusb_device *dev,
+                              libusb_hotplug_event event,
+                              void *user_data) -> int
+                              {
+                                if (LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED == event) {
+                                    printf("Arrived\n");
+                                } else if (LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT == event) {
+                                    printf("Left\n");
+                                } else {
+                                    printf("Unhandled event %d\n", event);
+                                }
+
+                                return 0;
+                              };
+
+    int rc = libusb_hotplug_register_callback(nullptr,
+                                            LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
+                                            0, VENDOR_ID, PRODUCT_ID, LIBUSB_HOTPLUG_MATCH_ANY, libusb_callback, nullptr, &callback_handle);
+
+    printf("%d\n", libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG ));
+#endif
+
+    auto kb_or_null = HID::Device::construct(VENDOR_ID, PRODUCT_ID, USAGE, USAGE_PAGE);
+    // auto keyboard = dev_or_fail.value();
+    if(!kb_or_null.has_value()) {
+        std::cerr << "no kb detected\n";
+    }
+
 #ifdef __MINGW32__
     CAudioEndpointVolumeCallback callback = [&](float volume) {
+        uint8_t buf[32] = { 0 };
         // wtf happens to buf[0]????
         buf[1] = 0x1;
         buf[2] = static_cast<uint8_t>(volume * 100);
-        dev.write(buf, 32);
-        printf("cmd: %d data: %d -> %S\n", buf[1], buf[2], hid_error(dev.handle));
+        if(kb_or_null.has_value()) {
+            kb_or_null->write(buf, 32);
+            printf("cmd: %d data: %d -> %S\n", buf[1], buf[2], kb_or_null->error());
+        }
     };
 
     VolumeLoop(&callback);
 #endif
+
+    while(true) {
+#ifndef __MINGW32__
+        libusb_handle_events_completed(nullptr, nullptr);
+#endif
+        Sleep(1000);
+    }
     return 0;
 }
