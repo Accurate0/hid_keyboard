@@ -12,106 +12,106 @@
 // TODO: add more cool stuff
 
 #ifdef __MINGW32__
-    #include <utility>
+#include <utility>
 
-    #include <Windows.h>
-    #include <mmdeviceapi.h>
-    #include <endpointvolume.h>
-    #include <audioclient.h>
+#include <Windows.h>
+#include <mmdeviceapi.h>
+#include <endpointvolume.h>
+#include <audioclient.h>
 
-    template<typename T>
-    class CAudioEndpointVolumeCallback : public IAudioEndpointVolumeCallback
+template<typename T>
+class CAudioEndpointVolumeCallback : public IAudioEndpointVolumeCallback
+{
+    LONG _cRef;
+    T m_callback;
+
+public:
+    CAudioEndpointVolumeCallback(T callback) :
+        _cRef(1), m_callback(std::move(callback))
     {
-        LONG _cRef;
-        T m_callback;
+    }
 
-    public:
-        CAudioEndpointVolumeCallback(T callback) :
-            _cRef(1), m_callback(std::move(callback))
-        {
-        }
-
-        // IUnknown methods -- AddRef, Release, and QueryInterface
-        ULONG STDMETHODCALLTYPE AddRef()
-        {
-            return InterlockedIncrement(&_cRef);
-        }
-
-        ULONG STDMETHODCALLTYPE Release()
-        {
-            ULONG ulRef = InterlockedDecrement(&_cRef);
-            if (ulRef == 0)
-            {
-                delete this;
-            }
-            return ulRef;
-        }
-
-        HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, VOID **ppvInterface)
-        {
-            if (IID_IUnknown == riid)
-            {
-                AddRef();
-                *ppvInterface = (IUnknown*)this;
-            }
-            else if (__uuidof(IAudioEndpointVolumeCallback) == riid)
-            {
-                AddRef();
-                *ppvInterface = (IAudioEndpointVolumeCallback*)this;
-            }
-            else
-            {
-                *ppvInterface = NULL;
-                return E_NOINTERFACE;
-            }
-            return S_OK;
-        }
-
-        // Callback method for endpoint-volume-change notifications.
-
-        HRESULT STDMETHODCALLTYPE OnNotify(PAUDIO_VOLUME_NOTIFICATION_DATA pNotify)
-        {
-            m_callback(pNotify->fMasterVolume);
-            return S_OK;
-        }
-    };
-
-    void VolumeLoop(IAudioEndpointVolumeCallback *callback)
+    // IUnknown methods -- AddRef, Release, and QueryInterface
+    ULONG STDMETHODCALLTYPE AddRef()
     {
+        return InterlockedIncrement(&_cRef);
+    }
+
+    ULONG STDMETHODCALLTYPE Release()
+    {
+        ULONG ulRef = InterlockedDecrement(&_cRef);
+        if (ulRef == 0)
+        {
+            delete this;
+        }
+        return ulRef;
+    }
+
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, VOID **ppvInterface)
+    {
+        if (IID_IUnknown == riid)
+        {
+            AddRef();
+            *ppvInterface = (IUnknown*)this;
+        }
+        else if (__uuidof(IAudioEndpointVolumeCallback) == riid)
+        {
+            AddRef();
+            *ppvInterface = (IAudioEndpointVolumeCallback*)this;
+        }
+        else
+        {
+            *ppvInterface = NULL;
+            return E_NOINTERFACE;
+        }
+        return S_OK;
+    }
+
+    // Callback method for endpoint-volume-change notifications.
+
+    HRESULT STDMETHODCALLTYPE OnNotify(PAUDIO_VOLUME_NOTIFICATION_DATA pNotify)
+    {
+        m_callback(pNotify->fMasterVolume);
+        return S_OK;
+    }
+};
+
+void VolumeLoop(IAudioEndpointVolumeCallback *callback)
+{
 #define ON_ERROR(hr) \
-    if(hr) { goto END; }
+if(hr) { goto END; }
 
-        HRESULT hr;
-        IMMDeviceEnumerator* pDeviceEnumerator = nullptr;
-        IMMDevice* pDevice = nullptr;
-        IAudioEndpointVolume* pAudioEndpointVolume = nullptr;
+    HRESULT hr;
+    IMMDeviceEnumerator* pDeviceEnumerator = nullptr;
+    IMMDevice* pDevice = nullptr;
+    IAudioEndpointVolume* pAudioEndpointVolume = nullptr;
 
-        CoInitialize(nullptr);
-        hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&pDeviceEnumerator);
-        ON_ERROR(hr);
+    CoInitialize(nullptr);
+    hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&pDeviceEnumerator);
+    ON_ERROR(hr);
 
-        hr = pDeviceEnumerator->GetDefaultAudioEndpoint(eRender, eMultimedia, &pDevice);
-        ON_ERROR(hr);
+    hr = pDeviceEnumerator->GetDefaultAudioEndpoint(eRender, eMultimedia, &pDevice);
+    ON_ERROR(hr);
 
-        hr = pDevice->Activate(__uuidof(IAudioEndpointVolume), CLSCTX_ALL, NULL, (void**)&pAudioEndpointVolume);
-        ON_ERROR(hr);
+    hr = pDevice->Activate(__uuidof(IAudioEndpointVolume), CLSCTX_ALL, NULL, (void**)&pAudioEndpointVolume);
+    ON_ERROR(hr);
 
-        pAudioEndpointVolume->RegisterControlChangeNotify(callback);
+    pAudioEndpointVolume->RegisterControlChangeNotify(callback);
 
-        return;
+    return;
 #undef ON_ERROR
 END:
-        if(pAudioEndpointVolume) {
-            pAudioEndpointVolume->Release();
-            pAudioEndpointVolume->UnregisterControlChangeNotify(callback);
-        }
-        if(pDevice)
-            pDevice->Release();
-        if(pDeviceEnumerator)
-            pDeviceEnumerator->Release();
-
-        CoUninitialize();
+    if(pAudioEndpointVolume) {
+        pAudioEndpointVolume->Release();
+        pAudioEndpointVolume->UnregisterControlChangeNotify(callback);
     }
+    if(pDevice)
+        pDevice->Release();
+    if(pDeviceEnumerator)
+        pDeviceEnumerator->Release();
+
+    CoUninitialize();
+}
 #endif
 
 class HID {
@@ -165,6 +165,7 @@ public:
             return std::make_optional(HID::Device(handle));
         }
 
+        // TODO: fix this
         // ~Device() {
         //     hid_close(m_handle);
         // }
