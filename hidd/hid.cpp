@@ -10,6 +10,7 @@
 // TODO: handle disconnects
 // TODO: linux
 // TODO: add more cool stuff
+// TODO: handle mute events :) switch colour to red ?
 
 #ifdef __MINGW32__
 #include <utility>
