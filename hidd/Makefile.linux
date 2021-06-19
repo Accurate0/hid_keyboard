@@ -1,0 +1,9 @@
+CC=c++
+CFLAGS=-Wall $(shell pkg-config --cflags libusb-1.0 hidapi-hidraw alsa) -fpermissive -std=c++17 -pthread
+LDFLAGS=$(shell pkg-config --libs libusb-1.0 hidapi-hidraw alsa)
+
+hid: hid.cpp
+	$(CC) $(CFLAGS) -o hid hid.cpp $(LDFLAGS)
+
+clean:
+	rm -f hid
