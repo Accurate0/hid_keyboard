@@ -285,8 +285,6 @@ int main(void)
         }
     };
 
-    UNUSED(send_volume);
-
     // WINDOWS NO HOTPLUG SUPPORT YEP
     // https://github.com/libusb/libusb/issues/86
     auto libusb_callback =
