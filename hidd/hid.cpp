@@ -13,8 +13,6 @@
 #endif
 
 // TODO: send current volume first, before callback register
-// TODO: handle disconnects
-// TODO: linux
 // TODO: add more cool stuff
 // TODO: handle mute events :) switch colour to red ?
 
