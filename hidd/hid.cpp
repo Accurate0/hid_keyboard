@@ -9,6 +9,7 @@
 #if defined(__linux__)
 #include <alsa/asoundlib.h>
 #include <thread>
+#include <cmath>
 #endif
 
 // TODO: send current volume first, before callback register
@@ -121,14 +122,8 @@ END:
 
 #ifdef __linux__
 static const char* mix_name = "Master";
-static const char* card = "default";
+static const char* card = "hw:1";
 static int mix_index = 0;
-
-template<typename T>
-void setup_volume_callback(T callback) {
-
-
-}
 
 uint8_t get_volume() {
     int ret = 0;
@@ -162,20 +157,20 @@ uint8_t get_volume() {
         return -5;
     }
 
+    // https://github.com/alsa-project/alsa-utils/blob/7a7e064f83f128e4e115c24ef15ba6788b1709a6/alsamixer/volume_mapping.c
+    // thanks :)
     long minv, maxv, outvol;
-    snd_mixer_selem_get_playback_volume_range(elem, &minv, &maxv);
-    if(snd_mixer_selem_get_playback_volume(elem, static_cast<snd_mixer_selem_channel_id_t>(0), &outvol) < 0) {
+    snd_mixer_selem_get_playback_dB_range(elem, &minv, &maxv);
+    if(snd_mixer_selem_get_playback_dB(elem, SND_MIXER_SCHN_UNKNOWN, &outvol) < 0) {
         snd_mixer_close(handle);
         return -6;
     }
 
-    // TODO: wtf is this volume cunt
-    /* make the value bound to 100 */
-    outvol -= minv;
-    maxv -= minv;
-    minv = 0;
-    outvol = 100 * (outvol) / maxv; // make the value bound from 0 to 100
-    return outvol;
+    double normalised = pow(10, (outvol - maxv) / 6000.0);
+    double min_norm = pow(10, (minv - maxv) / 6000.0);
+    normalised = (normalised - min_norm) / (1 - min_norm);
+
+    return static_cast<uint8_t>(normalised * 100);
 }
 
 #endif
@@ -288,7 +283,7 @@ int main(void)
         buf[2] = volume;
         if(kb_or_null.has_value()) {
             kb_or_null->write(buf, 32);
-            fprintf(stderr, "cmd: %d data: %d -> %S\n", buf[1], buf[2], kb_or_null->error());
+            fprintf(stderr, "cmd: %d data: %u -> %S\n", buf[1], buf[2], kb_or_null->error());
         }
     };
 
