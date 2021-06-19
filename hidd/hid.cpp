@@ -168,7 +168,7 @@ uint8_t get_volume() {
     double min_norm = pow(10, (minv - maxv) / 6000.0);
     normalised = (normalised - min_norm) / (1 - min_norm);
 
-    return static_cast<uint8_t>(normalised * 100);
+    return static_cast<uint8_t>(round(normalised * 100));
 }
 
 #endif
