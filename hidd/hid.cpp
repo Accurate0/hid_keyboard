@@ -263,8 +263,18 @@ public:
     };
 };
 
-int main(void)
-{
+void send_volume(uint8_t volume, std::optional<HID::Device>& kb_or_null) {
+    uint8_t buf[32] = { 0 };
+    // wtf happens to buf[0]????
+    buf[1] = VOLUME_COMMAND;
+    buf[2] = volume;
+    if(kb_or_null.has_value()) {
+        kb_or_null->write(buf, 32);
+        fprintf(stderr, "cmd: %d data: %u -> %S\n", buf[1], buf[2], kb_or_null->error());
+    }
+}
+
+int main(void) {
     libusb_init(nullptr);
     // lets try to connect as soon as we start
     auto kb_or_null = HID::Device::construct(VENDOR_ID, PRODUCT_ID, USAGE, USAGE_PAGE);
@@ -273,17 +283,6 @@ int main(void)
         std::cerr << "no kb detected\n";
     else
         kb_or_null.value().print_product();
-
-    auto send_volume = [&](uint8_t volume) {
-        uint8_t buf[32] = { 0 };
-        // wtf happens to buf[0]????
-        buf[1] = VOLUME_COMMAND;
-        buf[2] = volume;
-        if(kb_or_null.has_value()) {
-            kb_or_null->write(buf, 32);
-            fprintf(stderr, "cmd: %d data: %u -> %S\n", buf[1], buf[2], kb_or_null->error());
-        }
-    };
 
     // WINDOWS NO HOTPLUG SUPPORT YEP
     // https://github.com/libusb/libusb/issues/86
@@ -300,8 +299,8 @@ int main(void)
                 wchar_t product[32];
                 hid_get_product_string(new_handle_or_null, product, 32);
                 std::wcout << "connected to " << product << "\n";
-
                 kb_or_null->emplace(new_handle_or_null);
+                send_volume(get_volume(), *kb_or_null);
             } else {
                 std::cout << "received arrival event but no connection made\n";
             }
@@ -332,7 +331,7 @@ int main(void)
 
 #if defined(__MINGW32__)
     CAudioEndpointVolumeCallback callback = [&](float volume) {
-        send_volume(static_cast<uint8_t>(volume * 100));
+        send_volume(static_cast<uint8_t>(volume * 100), kb_or_null);
     };
 
     SetupVolumeCallback(&callback);
@@ -361,7 +360,7 @@ int main(void)
             snd_ctl_read(ctl, event);
 
             uint8_t volume = get_volume();
-            send_volume(volume);
+            send_volume(volume, kb_or_null);
         }
     });
 
