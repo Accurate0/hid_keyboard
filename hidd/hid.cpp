@@ -69,9 +69,9 @@ template <typename T> class CAudioEndpointVolumeCallback : public IAudioEndpoint
     }
 };
 void SetupVolumeCallback(IAudioEndpointVolumeCallback *callback) {
-#define ON_ERROR(hr)                                                                               \
-    if (hr) {                                                                                      \
-        goto END;                                                                                  \
+#define ON_ERROR(hr) \
+    if (hr) {        \
+        goto END;    \
     }
 
     HRESULT hr;
