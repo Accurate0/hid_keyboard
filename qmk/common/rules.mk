@@ -9,6 +9,6 @@ ifeq ($(strip $(SECRETS)), yes)
     OPT_DEFS += -DSECRETS
 endif
 
-SRC += libc.c
-SRC += calc.c
-SRC += accurate0.c
+EXT_SRC += libc.c
+EXT_SRC += calc.c
+EXT_SRC += accurate0.c
