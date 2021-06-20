@@ -336,7 +336,9 @@ int main(void)
     };
 
     SetupVolumeCallback(&callback);
-    while(true);
+    while(true) {
+        Sleep(1000);
+    }
 #endif
 
     // should  have mutex locks :)
