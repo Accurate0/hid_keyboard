@@ -7,3 +7,6 @@ hid: hid.cpp
 
 clean:
 	rm -f hid
+
+install: hid
+	install -s hid /usr/local/bin/ 
