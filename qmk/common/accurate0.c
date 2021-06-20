@@ -16,8 +16,8 @@ RGB caps_colour = { RGB_GREEN };
 void rgb_matrix_indicators_user(void) {
     if (host_keyboard_led_state().caps_lock) {
         // 82-89 left side light
-        for(int i = 82; i <= 89; i++) {
-            rgb_matrix_set_color(i, caps_colour.r, caps_colour.g, caps_colour.b);
+        for(int i = 0; i < LED_COUNT_PER_SIDE; i++) {
+            rgb_matrix_set_color(left_side_leds[i], caps_colour.r, caps_colour.g, caps_colour.b);
         }
     }
 }
