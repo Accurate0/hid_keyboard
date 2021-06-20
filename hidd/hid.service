@@ -1,0 +1,8 @@
+[Unit]
+Description=HID daemon :)
+
+[Service]
+ExecStart=/usr/local/bin/hid
+
+[Install]
+WantedBy=multi-user.target
