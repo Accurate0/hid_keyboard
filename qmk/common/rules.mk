@@ -1,9 +1,7 @@
 UCIS_ENABLE = yes
 WPM_ENABLE = yes
 
-ifneq ("$(wildcard $(USER_PATH)/secrets.c)","")
-  SRC += secrets.c
-endif
+EXT_SRC += secrets.c
 
 ifeq ($(strip $(SECRETS)), yes)
     OPT_DEFS += -DSECRETS

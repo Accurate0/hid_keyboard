@@ -65,12 +65,8 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
     return false;
 }
 
-void flash_and_reset(bool secrets) {
-    if(secrets)
-        SEND_STRING("qmk flash -j 4 -e SECRETS=yes" SS_TAP(X_ENTER));
-    else
-        SEND_STRING("qmk flash -j 4" SS_TAP(X_ENTER));
-
+void flash_and_reset(void) {
+    SEND_STRING("qmk flash -j 24" SS_TAP(X_ENTER));
     eeconfig_init();
     reset_keyboard();
 }
@@ -91,14 +87,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
         case KC_FSH:
             if(record->event.pressed) {
-                flash_and_reset(false);
-                return false;
-            }
-            break;
-
-        case KC_FSHS:
-            if(record->event.pressed) {
-                flash_and_reset(true);
+                flash_and_reset();
                 return false;
             }
             break;

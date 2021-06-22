@@ -6,7 +6,6 @@ enum {
     KC_WPM,
     KC_CAL,
     KC_FSH,
-    KC_FSHS,
     KC_SC1,
     KC_SC2,
     KC_SC3,
