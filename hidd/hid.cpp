@@ -109,6 +109,9 @@ END:
 }
 #endif
 
+// default for windows since the libusb callback never fires anyway
+__attribute__((weak)) uint8_t get_volume() { return 0; }
+
 #ifdef __linux__
 static const char *mix_name = "Master";
 static const char *card = "hw:1";
@@ -161,7 +164,6 @@ uint8_t get_volume() {
 
     return static_cast<uint8_t>(round(normalised * 100));
 }
-
 #endif
 
 #define VOLUME_COMMAND 0x1
