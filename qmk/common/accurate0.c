@@ -1,6 +1,5 @@
 #include "accurate0.h"
 #include "calc.h"
-#include "libc.h"
 
 __attribute__ ((weak))
 bool process_record_secrets(uint16_t keycode, keyrecord_t *record) {
@@ -102,16 +101,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case KC_WPM:
             if(record->event.pressed) {
                 uint8_t wpm = get_current_wpm();
-                static const char integer_map[] = { "0123456789" };
-
-                // int max '2147483647'
                 char buf[11] = { 0 };
-
-                for(int i = 0; wpm > 0; wpm /= 10, i++) {
-                    buf[i] = integer_map[wpm % 10];
-                }
-
-                reverse(buf);
+                sprintf(buf, "%d", wpm);
                 send_string(buf);
             }
             break;

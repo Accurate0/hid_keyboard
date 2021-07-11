@@ -1,5 +1,6 @@
 {
     "files.associations": {
         "*.inc": "c",
+        "accurate0.h": "c"
     }
 }
