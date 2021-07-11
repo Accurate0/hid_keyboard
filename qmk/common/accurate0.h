@@ -1,4 +1,6 @@
 #include QMK_KEYBOARD_H
+#include "raw_hid.h"
+#include "print.h"
 #pragma once
 
 enum {
