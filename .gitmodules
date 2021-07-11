@@ -1,4 +1,0 @@
-[submodule "qmk/clone"]
-	path = qmk/clone
-	url = git@github.com:Accurate0/qmk_firmware.git
-	branch = custom/gmmk
