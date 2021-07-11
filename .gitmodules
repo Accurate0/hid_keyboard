@@ -1,3 +1,4 @@
 [submodule "qmk/qmk_firmware"]
 	path = qmk/qmk_firmware
 	url = git@github.com:Accurate0/qmk_firmware.git
+	branch = develop
