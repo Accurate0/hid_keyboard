@@ -182,7 +182,7 @@ bool get_mute() {
 #endif
 
 #include "../qmk/common/hid_raw_constants.h"
-#define UNUSED(x)  static_cast<void>(x)
+#define UNUSED(x) static_cast<void>(x)
 // must match those defined in config.h
 #define VENDOR_ID  0x320F
 #define PRODUCT_ID 0x5044
@@ -386,13 +386,13 @@ int main(void) {
 
             {
                 std::lock_guard<std::mutex> guard(g_protect_handle);
-                const char *event_name = snd_ctl_event_elem_get_name(event);
-                if (!strcmp(event_name, "Master Playback Switch")) {
+                unsigned int event_id = snd_ctl_event_elem_get_numid(event);
+                if (event_id == 36) {
                     bool mute = get_mute();
                     send_mute(kb_or_null, mute);
                 }
 
-                if (!strcmp(event_name, "Master Playback Volume")) {
+                if (event_id == 35) {
                     uint8_t volume = get_volume();
                     send_volume(kb_or_null, volume);
                 }
