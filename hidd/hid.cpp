@@ -183,8 +183,10 @@ bool get_mute() {
 
 #include "../qmk/common/hid_raw_constants.h"
 #define UNUSED(x)  static_cast<void>(x)
+// must match those defined in config.h
 #define VENDOR_ID  0x320F
 #define PRODUCT_ID 0x5044
+// defaults -> https://beta.docs.qmk.fm/using-qmk/software-features/feature_rawhid
 #define USAGE      0x61
 #define USAGE_PAGE 0xFF60
 
