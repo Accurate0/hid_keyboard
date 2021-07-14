@@ -11,6 +11,7 @@
 #include <alsa/asoundlib.h>
 
 #include <cmath>
+#include <mutex>
 #include <thread>
 #endif
 
@@ -114,37 +115,46 @@ static const char *mix_name = "Master";
 static const char *card = "hw:1";
 static int mix_index = 0;
 
-uint8_t get_volume() {
-    int ret = 0;
-    snd_mixer_t *handle = nullptr;
+void alsa_connect(snd_mixer_t **handle, snd_mixer_elem_t **elem) {
     snd_mixer_selem_id_t *sid = nullptr;
-    snd_mixer_elem_t *elem = nullptr;
-
     snd_mixer_selem_id_alloca(&sid);
     snd_mixer_selem_id_set_index(sid, mix_index);
     snd_mixer_selem_id_set_name(sid, mix_name);
 
     // HOPE NOTHING FAILS HEY
-    if ((snd_mixer_open(&handle, 0)) < 0)
-        return -1;
-    if ((snd_mixer_attach(handle, card)) < 0) {
-        snd_mixer_close(handle);
-        return -2;
+    snd_mixer_open(handle, 0);
+
+    if ((snd_mixer_attach(*handle, card)) < 0) {
+        snd_mixer_close(*handle);
     }
-    if ((snd_mixer_selem_register(handle, NULL, NULL)) < 0) {
-        snd_mixer_close(handle);
-        return -3;
+    if ((snd_mixer_selem_register(*handle, NULL, NULL)) < 0) {
+        snd_mixer_close(*handle);
     }
-    ret = snd_mixer_load(handle);
-    if (ret < 0) {
-        snd_mixer_close(handle);
-        return -4;
+    if (snd_mixer_load(*handle) < 0) {
+        snd_mixer_close(*handle);
     }
-    elem = snd_mixer_find_selem(handle, sid);
+
+    *elem = snd_mixer_find_selem(*handle, sid);
     if (!elem) {
-        snd_mixer_close(handle);
-        return -5;
+        snd_mixer_close(*handle);
     }
+}
+
+bool get_mute() {
+    snd_mixer_t *handle = nullptr;
+    snd_mixer_elem_t *elem = nullptr;
+    alsa_connect(&handle, &elem);
+
+    int mute;
+    snd_mixer_selem_get_playback_switch(elem, SND_MIXER_SCHN_UNKNOWN, &mute);
+
+    return mute ? false : true;
+}
+
+uint8_t get_volume() {
+    snd_mixer_t *handle = nullptr;
+    snd_mixer_elem_t *elem = nullptr;
+    alsa_connect(&handle, &elem);
 
     // https://github.com/alsa-project/alsa-utils/blob/7a7e064f83f128e4e115c24ef15ba6788b1709a6/alsamixer/volume_mapping.c
     // thanks :)
@@ -152,7 +162,7 @@ uint8_t get_volume() {
     snd_mixer_selem_get_playback_dB_range(elem, &minv, &maxv);
     if (snd_mixer_selem_get_playback_dB(elem, SND_MIXER_SCHN_UNKNOWN, &outvol) < 0) {
         snd_mixer_close(handle);
-        return -6;
+        return 0;
     }
 
     double normalised = pow(10, (outvol - maxv) / 6000.0);
@@ -162,15 +172,21 @@ uint8_t get_volume() {
     return static_cast<uint8_t>(round(normalised * 100));
 }
 #else
-uint8_t get_volume() { return 0; }
+uint8_t get_volume() {
+    return 0;
+}
+
+bool get_mute() {
+    return false;
+}
 #endif
 
-#define VOLUME_COMMAND 0x1
-#define UNUSED(x)      static_cast<void>(x)
-#define VENDOR_ID      0x320F
-#define PRODUCT_ID     0x5044
-#define USAGE          0x61
-#define USAGE_PAGE     0xFF60
+#include "../qmk/common/hid_raw_constants.h"
+#define UNUSED(x)  static_cast<void>(x)
+#define VENDOR_ID  0x320F
+#define PRODUCT_ID 0x5044
+#define USAGE      0x61
+#define USAGE_PAGE 0xFF60
 
 class HID {
   public:
@@ -256,16 +272,31 @@ class HID {
     };
 };
 
-void send_volume(uint8_t volume, std::optional<HID::Device> &kb_or_null) {
+void send_buffer(std::optional<HID::Device> &kb_or_null, uint8_t *buffer) {
+    if (kb_or_null.has_value()) {
+        kb_or_null->write(buffer, 32);
+        fprintf(stderr, "cmd: 0x%u data: %u -> %S\n", buffer[1], buffer[2], kb_or_null->error());
+    }
+}
+
+void send_mute(std::optional<HID::Device> &kb_or_null, bool mute) {
+    uint8_t buf[32] = {0};
+    // wtf happens to buf[0]????
+    buf[1] = MUTE_COMMAND;
+    buf[2] = static_cast<uint8_t>(mute);
+    send_buffer(kb_or_null, buf);
+}
+
+void send_volume(std::optional<HID::Device> &kb_or_null, uint8_t volume) {
     uint8_t buf[32] = {0};
     // wtf happens to buf[0]????
     buf[1] = VOLUME_COMMAND;
     buf[2] = volume;
-    if (kb_or_null.has_value()) {
-        kb_or_null->write(buf, 32);
-        fprintf(stderr, "cmd: %d data: %u -> %S\n", buf[1], buf[2], kb_or_null->error());
-    }
+    send_buffer(kb_or_null, buf);
 }
+
+// protect handle access across 2 threads
+std::mutex g_protect_handle;
 
 int main(void) {
     libusb_init(nullptr);
@@ -281,6 +312,7 @@ int main(void) {
     // https://github.com/libusb/libusb/issues/86
     auto libusb_callback = [](struct libusb_context *ctx, struct libusb_device *dev,
                               libusb_hotplug_event event, void *user_data) -> int {
+        std::lock_guard<std::mutex> guard(g_protect_handle);
         auto kb_or_null = static_cast<std::optional<HID::Device> *>(user_data);
         if (event == LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED) {
             if (kb_or_null->has_value())
@@ -291,17 +323,20 @@ int main(void) {
             if (new_handle_or_null != nullptr) {
                 wchar_t product[32];
                 hid_get_product_string(new_handle_or_null, product, 32);
-                std::wcout << "connected to " << product << "\n";
+                std::wcerr << "connected to " << product << "\n";
                 kb_or_null->emplace(new_handle_or_null);
-                send_volume(get_volume(), *kb_or_null);
+
+                // provide initial state
+                send_mute(*kb_or_null, get_mute());
+                send_volume(*kb_or_null, get_volume());
             } else {
-                std::cout << "received arrival event but no connection made\n";
+                std::cerr << "received arrival event but no connection made, no perms possibly?\n";
             }
         } else if (event == LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT) {
-            std::cout << "disconnected from device\n";
+            std::cerr << "disconnected from device\n";
             kb_or_null->reset();
         } else {
-            std::cout << "unhandled event" << event << "\n";
+            std::cerr << "unhandled event" << event << "\n";
         }
 
         return 0;
@@ -347,8 +382,19 @@ int main(void) {
             snd_ctl_event_alloca(&event);
             snd_ctl_read(ctl, event);
 
-            uint8_t volume = get_volume();
-            send_volume(volume, kb_or_null);
+            {
+                std::lock_guard<std::mutex> guard(g_protect_handle);
+                const char *event_name = snd_ctl_event_elem_get_name(event);
+                if (!strcmp(event_name, "Master Playback Switch")) {
+                    bool mute = get_mute();
+                    send_mute(kb_or_null, mute);
+                }
+
+                if (!strcmp(event_name, "Master Playback Volume")) {
+                    uint8_t volume = get_volume();
+                    send_volume(kb_or_null, volume);
+                }
+            }
         }
     });
 

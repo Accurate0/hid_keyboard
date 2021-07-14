@@ -1,5 +1,6 @@
 #include "accurate0.h"
 #include "calc.h"
+#include "hid_raw_constants.h"
 
 __attribute__ ((weak))
 bool process_record_secrets(uint16_t keycode, keyrecord_t *record) {
@@ -22,18 +23,25 @@ void rgb_matrix_indicators_user(void) {
 }
 
 bool raw_hid_available = false;
-uint8_t volume = 80;
-#define VOLUME 0x1
-// TODO: handle mute events :) switch colour to red ?
+bool hid_mute = false;
+uint8_t hid_volume = 80;
+
 void raw_hid_receive(uint8_t *data, uint8_t length) {
     uint8_t command = data[0];
 
     switch(command) {
-        case VOLUME:
+        case VOLUME_COMMAND:
         {
             raw_hid_available = true;
-            volume = data[1];
-            dprintf("%d\n", volume);
+            hid_volume = data[1];
+            dprintf("vol: %d\n", hid_volume);
+        }
+        break;
+
+        case MUTE_COMMAND:
+        {
+            hid_mute = (bool)data[1];
+            dprintf("mute: %d\n", hid_mute);
         }
         break;
     }
@@ -44,12 +52,12 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
         case LY_BASE:
             if (clockwise) {
                 tap_code(KC_VOLU);
-                if(!raw_hid_available && volume < 100)
-                    volume += 2;
+                if(!raw_hid_available && hid_volume < 100)
+                    hid_volume += 2;
             } else {
                 tap_code(KC_VOLD);
-                if(!raw_hid_available && volume > 0)
-                    volume -= 2;
+                if(!raw_hid_available && hid_volume > 0)
+                    hid_volume -= 2;
             }
         break;
 

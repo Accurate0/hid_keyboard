@@ -8,7 +8,8 @@ RGB_MATRIX_EFFECT(REACTIVE)
 // Define effects inside the `RGB_MATRIX_CUSTOM_EFFECT_IMPLS` ifdef block
 #ifdef RGB_MATRIX_CUSTOM_EFFECT_IMPLS
 
-extern uint8_t volume;
+extern uint8_t hid_volume;
+extern bool hid_mute;
 
 static HSV REACTIVE_math(HSV hsv, int16_t dx, int16_t dy, uint8_t dist, uint16_t tick) {
     uint16_t effect = tick + dist;
@@ -44,7 +45,15 @@ bool REACTIVE_effect_runner(uint8_t start, effect_params_t* params, reactive_spl
         rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
     }
 
-    uint32_t total_count = volume * 20;
+    if(hid_mute) {
+        for (uint8_t i = 97; i >= 90; i--) {
+            rgb_matrix_set_color(i, RGB_RED);
+        }
+
+        return led_max < DRIVER_LED_TOTAL;
+    }
+
+    uint32_t total_count = hid_volume * 20;
     // right side
     for (uint8_t i = 97; i >= 90; i--) {
         if(total_count < 0) {
