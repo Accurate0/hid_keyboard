@@ -5,13 +5,13 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
+#include <mutex>
 #include <optional>
 
 #if defined(__linux__)
 #include <alsa/asoundlib.h>
 
 #include <cmath>
-#include <mutex>
 #include <thread>
 #endif
 
@@ -27,12 +27,18 @@
 
 #include <utility>
 
-template <typename T> class CAudioEndpointVolumeCallback : public IAudioEndpointVolumeCallback {
+template <typename T, typename T1>
+class CAudioEndpointVolumeCallback : public IAudioEndpointVolumeCallback {
     LONG _cRef;
-    T m_callback;
+    T m_volume_callback;
+    T1 m_mute_callback;
+    bool mute = false;
+    float volume = 0;
 
   public:
-    CAudioEndpointVolumeCallback(T callback) : _cRef(1), m_callback(std::move(callback)) {
+    CAudioEndpointVolumeCallback(T volume_callback, T1 mute_callback)
+        : _cRef(1), m_volume_callback(std::move(volume_callback)),
+          m_mute_callback(std::move(mute_callback)) {
     }
 
     // IUnknown methods -- AddRef, Release, and QueryInterface
@@ -63,13 +69,27 @@ template <typename T> class CAudioEndpointVolumeCallback : public IAudioEndpoint
     }
 
     // Callback method for endpoint-volume-change notifications.
-
     HRESULT STDMETHODCALLTYPE OnNotify(PAUDIO_VOLUME_NOTIFICATION_DATA pNotify) {
-        m_callback(pNotify->fMasterVolume);
+        bool old_mute = mute;
+        float old_volume = volume;
+
+        mute = pNotify->bMuted;
+        volume = pNotify->fMasterVolume;
+
+        if (mute != old_mute) {
+            m_mute_callback(pNotify->bMuted);
+        }
+
+        if (!mute && volume != old_volume) {
+            m_volume_callback(pNotify->fMasterVolume);
+        }
+
         return S_OK;
     }
 };
-void SetupVolumeCallback(IAudioEndpointVolumeCallback *callback) {
+
+template<typename T>
+void SetupVolumeCallback(IAudioEndpointVolumeCallback *callback, T initialState) {
 #define ON_ERROR(hr) \
     if (hr) {        \
         goto END;    \
@@ -91,6 +111,13 @@ void SetupVolumeCallback(IAudioEndpointVolumeCallback *callback) {
     hr = pDevice->Activate(__uuidof(IAudioEndpointVolume), CLSCTX_ALL, NULL,
                            (void **)&pAudioEndpointVolume);
     ON_ERROR(hr);
+
+    WINBOOL mute;
+    pAudioEndpointVolume->GetMute(&mute);
+    FLOAT volume;
+    pAudioEndpointVolume->GetMasterVolumeLevelScalar(&volume);
+
+    initialState(volume, mute);
 
     pAudioEndpointVolume->RegisterControlChangeNotify(callback);
 
@@ -355,11 +382,15 @@ int main(void) {
               << (libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG) ? "true" : "false") << "\n";
 
 #if defined(__MINGW32__)
-    CAudioEndpointVolumeCallback callback = [&](float volume) {
-        send_volume(static_cast<uint8_t>(volume * 100), kb_or_null);
-    };
+    CAudioEndpointVolumeCallback callback = {
+        [&](float volume) { send_volume(kb_or_null, static_cast<uint8_t>(volume * 100)); },
+        [&](bool mute) { send_mute(kb_or_null, mute); }};
 
-    SetupVolumeCallback(&callback);
+    SetupVolumeCallback(&callback, [&](float volume, WINBOOL mute) {
+        // callback sends the initial date from the connection
+        send_volume(kb_or_null, static_cast<uint8_t>(volume * 100));
+        send_mute(kb_or_null, mute);
+    });
     while (true) {
         Sleep(1000);
     }
