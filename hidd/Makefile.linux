@@ -1,5 +1,5 @@
 CC=c++
-CFLAGS=-Wall $(shell pkg-config --cflags libusb-1.0 hidapi-hidraw alsa) -fpermissive -std=c++17 -pthread
+CFLAGS=-Wall $(shell pkg-config --cflags libusb-1.0 hidapi-hidraw alsa) -I./spdlog/include -fpermissive -std=c++17 -pthread
 LDFLAGS=$(shell pkg-config --libs libusb-1.0 hidapi-hidraw alsa)
 
 hid: hid.cpp
@@ -9,4 +9,4 @@ clean:
 	rm -f hid
 
 install: hid
-	install -s hid /usr/local/bin/ 
+	install -s hid /usr/local/bin/

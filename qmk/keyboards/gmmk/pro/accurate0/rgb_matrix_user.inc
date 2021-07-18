@@ -45,14 +45,6 @@ bool REACTIVE_effect_runner(uint8_t start, effect_params_t* params, reactive_spl
         rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
     }
 
-    if(hid_mute) {
-        for (uint8_t i = 97; i >= 90; i--) {
-            rgb_matrix_set_color(i, RGB_RED);
-        }
-
-        return led_max < DRIVER_LED_TOTAL;
-    }
-
     uint32_t total_count = hid_volume * 20;
     // right side
     for (uint8_t i = 97; i >= 90; i--) {
@@ -69,7 +61,7 @@ bool REACTIVE_effect_runner(uint8_t start, effect_params_t* params, reactive_spl
         }
 
         HSV hsv = { 9, 150, value };
-        RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
+        RGB rgb = rgb_matrix_hsv_to_rgb(hid_mute ? (HSV){0, 255, value } : hsv);
         rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
 
         total_count -= value;

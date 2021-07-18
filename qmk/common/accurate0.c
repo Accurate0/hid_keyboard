@@ -1,6 +1,6 @@
 #include "accurate0.h"
 #include "calc.h"
-#include "hid_raw_constants.h"
+#include "hid_commands.h"
 
 __attribute__ ((weak))
 bool process_record_secrets(uint16_t keycode, keyrecord_t *record) {

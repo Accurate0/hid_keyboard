@@ -1,3 +1,8 @@
+// clang-format off
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
+// clang-format on
+
 #include <hidapi.h>
 #include <libusb.h>
 
@@ -88,7 +93,7 @@ class CAudioEndpointVolumeCallback : public IAudioEndpointVolumeCallback {
     }
 };
 
-template<typename T>
+template <typename T>
 void SetupVolumeCallback(IAudioEndpointVolumeCallback *callback, T initialState) {
 #define ON_ERROR(hr) \
     if (hr) {        \
@@ -208,7 +213,7 @@ bool get_mute() {
 }
 #endif
 
-#include "../qmk/common/hid_raw_constants.h"
+#include "../qmk/common/hid_commands.h"
 #define UNUSED(x) static_cast<void>(x)
 // must match those defined in config.h
 #define VENDOR_ID  0x320F
@@ -281,10 +286,13 @@ class HID {
             hid_close(m_handle);
         }
 
-        void print_product() {
+        template <typename OStream> friend OStream &operator<<(OStream &os, const Device &dev) {
             wchar_t product[32];
-            hid_get_product_string(m_handle, product, 32);
-            std::wcout << "connected to " << product << "\n";
+            char utf8_prod[32];
+            hid_get_product_string(dev.m_handle, product, 32);
+            std::wcstombs(utf8_prod, product, 32);
+
+            return os << utf8_prod;
         }
 
         int write(uint8_t *buf, int size) {
@@ -304,22 +312,23 @@ class HID {
 void send_buffer(std::optional<HID::Device> &kb_or_null, uint8_t *buffer) {
     if (kb_or_null.has_value()) {
         kb_or_null->write(buffer, 32);
-        fprintf(stderr, "cmd: 0x%u data: %u -> %S\n", buffer[1], buffer[2], kb_or_null->error());
+        char s[32];
+        std::wcstombs(s, kb_or_null->error(), 32);
+        spdlog::info("writing: {} {} to {} -> {}", buffer[1], buffer[2], *kb_or_null, s);
     }
 }
 
+// buf[0] is the report ID, should be set to 0
 void send_mute(std::optional<HID::Device> &kb_or_null, bool mute) {
     uint8_t buf[32] = {0};
-    // wtf happens to buf[0]????
-    buf[1] = MUTE_COMMAND;
+    buf[1] = HIDCommands::MUTE_COMMAND;
     buf[2] = static_cast<uint8_t>(mute);
     send_buffer(kb_or_null, buf);
 }
 
 void send_volume(std::optional<HID::Device> &kb_or_null, uint8_t volume) {
     uint8_t buf[32] = {0};
-    // wtf happens to buf[0]????
-    buf[1] = VOLUME_COMMAND;
+    buf[1] = HIDCommands::VOLUME_COMMAND;
     buf[2] = volume;
     send_buffer(kb_or_null, buf);
 }
@@ -328,14 +337,26 @@ void send_volume(std::optional<HID::Device> &kb_or_null, uint8_t volume) {
 std::mutex g_protect_handle;
 
 int main(void) {
+    spdlog::set_pattern("[%^%7l%$]: %v");
     libusb_init(nullptr);
+    const libusb_version *libusb_ver = libusb_get_version();
+    spdlog::info("libusb: v{}.{}.{}", libusb_ver->major, libusb_ver->minor, libusb_ver->micro);
+    const struct hid_api_version *hidapi_ver = hid_version();
+    spdlog::info("hidapi: v{}.{}.{}", hidapi_ver->major, hidapi_ver->minor, hidapi_ver->patch);
+
     // lets try to connect as soon as we start
     auto kb_or_null = HID::Device::construct(VENDOR_ID, PRODUCT_ID, USAGE, USAGE_PAGE);
     // doesn't matter if we fail, on linux we setup a hotplug handler
-    if (!kb_or_null.has_value())
-        std::cerr << "no kb detected\n";
-    else
-        kb_or_null.value().print_product();
+
+    if (kb_or_null.has_value()) {
+        spdlog::info("device connected: {}", *kb_or_null);
+#if defined(__linux__)
+        send_mute(kb_or_null, get_mute());
+        send_volume(kb_or_null, get_volume());
+#endif
+    } else {
+        spdlog::info("no kb detected");
+    }
 
     // WINDOWS NO HOTPLUG SUPPORT YEP
     // https://github.com/libusb/libusb/issues/86
@@ -350,22 +371,20 @@ int main(void) {
             auto new_handle_or_null =
                 HID::Device::construct_handle(VENDOR_ID, PRODUCT_ID, USAGE, USAGE_PAGE);
             if (new_handle_or_null != nullptr) {
-                wchar_t product[32];
-                hid_get_product_string(new_handle_or_null, product, 32);
-                std::wcerr << "connected to " << product << "\n";
                 kb_or_null->emplace(new_handle_or_null);
+                spdlog::info("device connected: {}", **kb_or_null);
 
                 // provide initial state
                 send_mute(*kb_or_null, get_mute());
                 send_volume(*kb_or_null, get_volume());
             } else {
-                std::cerr << "received arrival event but no connection made, no perms possibly?\n";
+                spdlog::warn("received arrival event but no connection made, no perms possibly?");
             }
         } else if (event == LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT) {
-            std::cerr << "disconnected from device\n";
+            spdlog::info("disconnected from device");
             kb_or_null->reset();
         } else {
-            std::cerr << "unhandled event" << event << "\n";
+            spdlog::error("unhandled event");
         }
 
         return 0;
@@ -378,8 +397,9 @@ int main(void) {
         LIBUSB_HOTPLUG_ENUMERATE, VENDOR_ID, PRODUCT_ID, LIBUSB_HOTPLUG_MATCH_ANY, libusb_callback,
         &kb_or_null, nullptr);
 
-    std::cerr << "hotplug support = "
-              << (libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG) ? "true" : "false") << "\n";
+    spdlog::info("setting up hotplug callback");
+    spdlog::info("libusb hotplug support = {}",
+                 (libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG) ? "true" : "false"));
 
 #if defined(__MINGW32__)
     CAudioEndpointVolumeCallback callback = {
@@ -396,7 +416,6 @@ int main(void) {
     }
 #endif
 
-    // should  have mutex locks :)
 #if defined(__linux__)
     snd_ctl_t *ctl = nullptr;
     snd_ctl_open(&ctl, card, SND_CTL_READONLY);
