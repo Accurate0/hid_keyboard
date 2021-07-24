@@ -4,9 +4,9 @@
 #define CALC_MAX 128
 
 typedef struct {
-    uint8_t  count;
+    uint8_t count;
     uint8_t chars[CALC_MAX];
-    bool     in_progress : 1;
+    bool in_progress : 1;
 } calc_t;
 
 void calc_start(void);

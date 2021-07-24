@@ -17,6 +17,7 @@
 
 #ifdef RGB_MATRIX_ENABLE
 
+// clang-format off
 const aw_led g_aw_leds[DRIVER_LED_TOTAL] = {
 /* Refer to AW20216S manual for these locations
  *   driver

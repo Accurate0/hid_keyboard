@@ -1,9 +1,10 @@
 #include QMK_KEYBOARD_H
-#include "raw_hid.h"
 #include "print.h"
+#include "raw_hid.h"
 #pragma once
 
-enum {
+enum
+{
     KC_EMO = SAFE_RANGE,
     KC_WPM,
     KC_CAL,
@@ -17,10 +18,23 @@ enum {
     NEW_SAFE_RANGE
 };
 
-enum Layers {
+enum Layers
+{
     LY_BASE = 0,
     LY_FUNC
 };
+
+typedef struct {
+    struct {
+        RGB capslock;
+    } color;
+
+    struct {
+        bool available;
+        bool mute;
+        uint8_t volume;
+    } hid;
+} globals_t;
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record);
 void qk_ucis_start_user(void);
