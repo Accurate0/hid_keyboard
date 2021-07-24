@@ -10,11 +10,6 @@ const qk_ucis_symbol_t ucis_symbol_table[] =
     UCIS_TABLE(UCIS_SYM("eyes", 0x1F441, 0x1F445, 0x1F441) //👁👅👁
     );
 
-// RGB caps_colour = { RGB_GREEN };
-// bool raw_hid_available = false;
-// bool hid_mute = false;
-// uint8_t hid_volume = 80;
-
 globals_t _globals = {.color = {.capslock = {RGB_GREEN}},
                       .hid = {
                           .available = false,
