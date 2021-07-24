@@ -240,8 +240,9 @@ class HID {
   public:
     static HID hid;
     HID() {
-        if (hid_init())
+        if (hid_init()) {
             abort();
+        }
     }
 
     ~HID() {
@@ -270,8 +271,9 @@ class HID {
                 cur_dev = cur_dev->next;
             }
 
-            if (!path)
+            if (!path) {
                 return nullptr;
+            }
 
             hid_device *handle = hid_open_path(path);
             if (!handle)
@@ -382,8 +384,9 @@ int main(void) {
         std::lock_guard<std::mutex> guard(g_protect_handle);
         auto kb_or_null = static_cast<std::optional<HID::Device> *>(user_data);
         if (event == LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED) {
-            if (kb_or_null->has_value())
+            if (kb_or_null->has_value()) {
                 return 0;
+            }
 
             auto new_handle_or_null =
                 HID::Device::construct_handle(VENDOR_ID, PRODUCT_ID, USAGE, USAGE_PAGE);

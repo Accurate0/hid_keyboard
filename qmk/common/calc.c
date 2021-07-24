@@ -6,37 +6,37 @@ calc_t calc;
 static uint8_t calc_keycode_to_char(uint8_t keycode, bool shift) {
     if (shift) {
         switch (keycode) {
-        case KC_8:
-            return '*';
-        case KC_EQL:
-            return '+';
+            case KC_8:
+                return '*';
+            case KC_EQL:
+                return '+';
         }
     } else {
         switch (keycode) {
-        case KC_MINS:
-            return '-';
-        case KC_SLSH:
-            return '/';
-        case KC_1:
-            return '1';
-        case KC_2:
-            return '2';
-        case KC_3:
-            return '3';
-        case KC_4:
-            return '4';
-        case KC_5:
-            return '5';
-        case KC_6:
-            return '6';
-        case KC_7:
-            return '7';
-        case KC_8:
-            return '8';
-        case KC_9:
-            return '9';
-        case KC_0:
-            return '0';
+            case KC_MINS:
+                return '-';
+            case KC_SLSH:
+                return '/';
+            case KC_1:
+                return '1';
+            case KC_2:
+                return '2';
+            case KC_3:
+                return '3';
+            case KC_4:
+                return '4';
+            case KC_5:
+                return '5';
+            case KC_6:
+                return '6';
+            case KC_7:
+                return '7';
+            case KC_8:
+                return '8';
+            case KC_9:
+                return '9';
+            case KC_0:
+                return '0';
         }
     }
 
