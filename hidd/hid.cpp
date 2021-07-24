@@ -17,6 +17,7 @@
 #include <alsa/asoundlib.h>
 
 #include <cmath>
+#include <signal.h>
 #include <thread>
 #endif
 
@@ -172,10 +173,25 @@ void alsa_connect(snd_mixer_t **handle, snd_mixer_elem_t **elem) {
     }
 }
 
+template <typename T> class ScopeGuard {
+  private:
+    T m_callback;
+
+  public:
+    ScopeGuard(T callback) : m_callback(std::move(callback)) {
+    }
+
+    ~ScopeGuard() {
+        m_callback();
+    }
+};
+
 bool get_mute() {
     snd_mixer_t *handle = nullptr;
     snd_mixer_elem_t *elem = nullptr;
     alsa_connect(&handle, &elem);
+
+    ScopeGuard guard = [&] { snd_mixer_close(handle); };
 
     int mute;
     snd_mixer_selem_get_playback_switch(elem, SND_MIXER_SCHN_UNKNOWN, &mute);
@@ -188,14 +204,14 @@ uint8_t get_volume() {
     snd_mixer_elem_t *elem = nullptr;
     alsa_connect(&handle, &elem);
 
+    ScopeGuard guard = [&] { snd_mixer_close(handle); };
+
     // https://github.com/alsa-project/alsa-utils/blob/7a7e064f83f128e4e115c24ef15ba6788b1709a6/alsamixer/volume_mapping.c
     // thanks :)
     long minv, maxv, outvol;
     snd_mixer_selem_get_playback_dB_range(elem, &minv, &maxv);
-    if (snd_mixer_selem_get_playback_dB(elem, SND_MIXER_SCHN_UNKNOWN, &outvol) < 0) {
-        snd_mixer_close(handle);
-        return 0;
-    }
+    // can fail
+    snd_mixer_selem_get_playback_dB(elem, SND_MIXER_SCHN_UNKNOWN, &outvol);
 
     double normalised = pow(10, (outvol - maxv) / 6000.0);
     double min_norm = pow(10, (minv - maxv) / 6000.0);
@@ -344,19 +360,22 @@ int main(void) {
     const struct hid_api_version *hidapi_ver = hid_version();
     spdlog::info("hidapi: v{}.{}.{}", hidapi_ver->major, hidapi_ver->minor, hidapi_ver->patch);
 
+    ScopeGuard guard = [&] { libusb_exit(nullptr); };
+
     // lets try to connect as soon as we start
     auto kb_or_null = HID::Device::construct(VENDOR_ID, PRODUCT_ID, USAGE, USAGE_PAGE);
     // doesn't matter if we fail, on linux we setup a hotplug handler
 
     if (kb_or_null.has_value()) {
         spdlog::info("device connected: {}", *kb_or_null);
-#if defined(__linux__)
-        send_mute(kb_or_null, get_mute());
-        send_volume(kb_or_null, get_volume());
-#endif
     } else {
         spdlog::info("no kb detected");
     }
+
+#if defined(__linux__)
+    send_mute(kb_or_null, get_mute());
+    send_volume(kb_or_null, get_volume());
+#endif
 
     // WINDOWS NO HOTPLUG SUPPORT YEP
     // https://github.com/libusb/libusb/issues/86

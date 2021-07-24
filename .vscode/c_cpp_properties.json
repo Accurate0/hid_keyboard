@@ -24,7 +24,7 @@
                 "${workspaceFolder}/**",
                 "/usr/include/libusb-1.0/**",
                 "/usr/include/hidapi/**",
-                "${workspaceFolder}/spdlog/include/spdlog/**"
+                "${workspaceFolder}/hidd/spdlog/include/spdlog/**"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/g++",
