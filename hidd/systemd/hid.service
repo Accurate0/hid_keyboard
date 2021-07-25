@@ -1,0 +1,15 @@
+[Unit]
+Description=HID daemon :)
+
+# wait for my sound card
+Requires=sys-devices-pci0000:00-0000:00:08.1-0000:0b:00.4-sound-card1-controlC1.device
+After=sys-devices-pci0000:00-0000:00:08.1-0000:0b:00.4-sound-card1-controlC1.device
+# wait for my keyboard tagged via 99-input-tagging.rules
+Requires=sys-subsystem-input-devices-Glorious_GMMK_Pro.device
+After=sys-subsystem-input-devices-Glorious_GMMK_Pro.device
+
+[Service]
+ExecStart=/usr/local/bin/hid
+
+[Install]
+WantedBy=multi-user.target
