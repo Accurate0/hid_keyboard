@@ -13,15 +13,91 @@
 #include <mutex>
 #include <optional>
 
+// TODO: add more cool stuff
+
 #if defined(__linux__)
 #include <alsa/asoundlib.h>
 
 #include <cmath>
 #include <signal.h>
 #include <thread>
-#endif
 
-// TODO: add more cool stuff
+static const char *mix_name = "Master";
+static const char *card = "default";
+static int mix_index = 0;
+
+void alsa_connect(snd_mixer_t **handle, snd_mixer_elem_t **elem) {
+    snd_mixer_selem_id_t *sid = nullptr;
+    snd_mixer_selem_id_alloca(&sid);
+    snd_mixer_selem_id_set_index(sid, mix_index);
+    snd_mixer_selem_id_set_name(sid, mix_name);
+
+    // HOPE NOTHING FAILS HEY
+    snd_mixer_open(handle, 0);
+
+    if ((snd_mixer_attach(*handle, card)) < 0) {
+        snd_mixer_close(*handle);
+    }
+    if ((snd_mixer_selem_register(*handle, NULL, NULL)) < 0) {
+        snd_mixer_close(*handle);
+    }
+    if (snd_mixer_load(*handle) < 0) {
+        snd_mixer_close(*handle);
+    }
+
+    *elem = snd_mixer_find_selem(*handle, sid);
+    if (!elem) {
+        snd_mixer_close(*handle);
+    }
+}
+
+template <typename T> class ScopeGuard {
+  private:
+    T m_callback;
+
+  public:
+    ScopeGuard(T callback) : m_callback(std::move(callback)) {
+    }
+
+    ~ScopeGuard() {
+        m_callback();
+    }
+};
+
+bool get_mute() {
+    snd_mixer_t *handle = nullptr;
+    snd_mixer_elem_t *elem = nullptr;
+    alsa_connect(&handle, &elem);
+
+    ScopeGuard guard = [&] { snd_mixer_close(handle); };
+
+    int mute;
+    snd_mixer_selem_get_playback_switch(elem, SND_MIXER_SCHN_UNKNOWN, &mute);
+
+    return mute ? false : true;
+}
+
+uint8_t get_volume() {
+    snd_mixer_t *handle = nullptr;
+    snd_mixer_elem_t *elem = nullptr;
+    alsa_connect(&handle, &elem);
+
+    ScopeGuard guard = [&] { snd_mixer_close(handle); };
+
+    // https://github.com/alsa-project/alsa-utils/blob/7a7e064f83f128e4e115c24ef15ba6788b1709a6/alsamixer/volume_mapping.c
+    // thanks :)
+    long minv, maxv, outvol;
+    snd_mixer_selem_get_playback_dB_range(elem, &minv, &maxv);
+    // can fail
+    snd_mixer_selem_get_playback_dB(elem, SND_MIXER_SCHN_UNKNOWN, &outvol);
+
+    double normalised = pow(10, (outvol - maxv) / 6000.0);
+    double min_norm = pow(10, (minv - maxv) / 6000.0);
+    normalised = (normalised - min_norm) / (1 - min_norm);
+
+    return static_cast<uint8_t>(round(normalised * 100));
+}
+#endif
 
 #if defined(__MINGW32__)
 #include <Windows.h>
@@ -138,92 +214,6 @@ END:
         pDeviceEnumerator->Release();
 
     CoUninitialize();
-}
-#endif
-
-#ifdef __linux__
-static const char *mix_name = "Master";
-static const char *card = "default";
-static int mix_index = 0;
-
-void alsa_connect(snd_mixer_t **handle, snd_mixer_elem_t **elem) {
-    snd_mixer_selem_id_t *sid = nullptr;
-    snd_mixer_selem_id_alloca(&sid);
-    snd_mixer_selem_id_set_index(sid, mix_index);
-    snd_mixer_selem_id_set_name(sid, mix_name);
-
-    // HOPE NOTHING FAILS HEY
-    snd_mixer_open(handle, 0);
-
-    if ((snd_mixer_attach(*handle, card)) < 0) {
-        snd_mixer_close(*handle);
-    }
-    if ((snd_mixer_selem_register(*handle, NULL, NULL)) < 0) {
-        snd_mixer_close(*handle);
-    }
-    if (snd_mixer_load(*handle) < 0) {
-        snd_mixer_close(*handle);
-    }
-
-    *elem = snd_mixer_find_selem(*handle, sid);
-    if (!elem) {
-        snd_mixer_close(*handle);
-    }
-}
-
-template <typename T> class ScopeGuard {
-  private:
-    T m_callback;
-
-  public:
-    ScopeGuard(T callback) : m_callback(std::move(callback)) {
-    }
-
-    ~ScopeGuard() {
-        m_callback();
-    }
-};
-
-bool get_mute() {
-    snd_mixer_t *handle = nullptr;
-    snd_mixer_elem_t *elem = nullptr;
-    alsa_connect(&handle, &elem);
-
-    ScopeGuard guard = [&] { snd_mixer_close(handle); };
-
-    int mute;
-    snd_mixer_selem_get_playback_switch(elem, SND_MIXER_SCHN_UNKNOWN, &mute);
-
-    return mute ? false : true;
-}
-
-uint8_t get_volume() {
-    snd_mixer_t *handle = nullptr;
-    snd_mixer_elem_t *elem = nullptr;
-    alsa_connect(&handle, &elem);
-
-    ScopeGuard guard = [&] { snd_mixer_close(handle); };
-
-    // https://github.com/alsa-project/alsa-utils/blob/7a7e064f83f128e4e115c24ef15ba6788b1709a6/alsamixer/volume_mapping.c
-    // thanks :)
-    long minv, maxv, outvol;
-    snd_mixer_selem_get_playback_dB_range(elem, &minv, &maxv);
-    // can fail
-    snd_mixer_selem_get_playback_dB(elem, SND_MIXER_SCHN_UNKNOWN, &outvol);
-
-    double normalised = pow(10, (outvol - maxv) / 6000.0);
-    double min_norm = pow(10, (minv - maxv) / 6000.0);
-    normalised = (normalised - min_norm) / (1 - min_norm);
-
-    return static_cast<uint8_t>(round(normalised * 100));
-}
-#else
-uint8_t get_volume() {
-    return 0;
-}
-
-bool get_mute() {
-    return false;
 }
 #endif
 
@@ -375,7 +365,6 @@ int main(void) {
 #if defined(__linux__)
     send_mute(kb_or_null, get_mute());
     send_volume(kb_or_null, get_volume());
-#endif
 
     // WINDOWS NO HOTPLUG SUPPORT YEP
     // https://github.com/libusb/libusb/issues/86
@@ -417,26 +406,6 @@ int main(void) {
         LIBUSB_HOTPLUG_ENUMERATE, VENDOR_ID, PRODUCT_ID, LIBUSB_HOTPLUG_MATCH_ANY, libusb_callback,
         &kb_or_null, nullptr);
 
-    spdlog::info("setting up hotplug callback");
-    spdlog::info("libusb hotplug support = {}",
-                 (libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG) ? "true" : "false"));
-
-#if defined(__MINGW32__)
-    CAudioEndpointVolumeCallback callback = {
-        [&](float volume) { send_volume(kb_or_null, static_cast<uint8_t>(volume * 100)); },
-        [&](bool mute) { send_mute(kb_or_null, mute); }};
-
-    SetupVolumeCallback(&callback, [&](float volume, WINBOOL mute) {
-        // callback sends the initial date from the connection
-        send_volume(kb_or_null, static_cast<uint8_t>(volume * 100));
-        send_mute(kb_or_null, mute);
-    });
-    while (true) {
-        Sleep(1000);
-    }
-#endif
-
-#if defined(__linux__)
     snd_ctl_t *ctl = nullptr;
     snd_ctl_open(&ctl, card, SND_CTL_READONLY);
     snd_ctl_nonblock(ctl, 0);
@@ -472,6 +441,25 @@ int main(void) {
 
     libusb_thread.join();
     volume_thread.join();
+#endif
+
+    spdlog::info("setting up hotplug callback");
+    spdlog::info("libusb hotplug support = {}",
+                 (libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG) ? "true" : "false"));
+
+#if defined(__MINGW32__)
+    CAudioEndpointVolumeCallback callback = {
+        [&](float volume) { send_volume(kb_or_null, static_cast<uint8_t>(volume * 100)); },
+        [&](bool mute) { send_mute(kb_or_null, mute); }};
+
+    SetupVolumeCallback(&callback, [&](float volume, WINBOOL mute) {
+        // callback sends the initial date from the connection
+        send_volume(kb_or_null, static_cast<uint8_t>(volume * 100));
+        send_mute(kb_or_null, mute);
+    });
+    while (true) {
+        Sleep(1000);
+    }
 #endif
 
     return 0;
