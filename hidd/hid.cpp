@@ -143,7 +143,7 @@ END:
 
 #ifdef __linux__
 static const char *mix_name = "Master";
-static const char *card = "hw:1";
+static const char *card = "default";
 static int mix_index = 0;
 
 void alsa_connect(snd_mixer_t **handle, snd_mixer_elem_t **elem) {
