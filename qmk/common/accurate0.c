@@ -17,18 +17,20 @@ globals_t _globals = {.color = {.capslock = {RGB_GREEN}},
                           .volume = 80,
                       }};
 
-void raw_hid_receive(uint8_t *data, uint8_t length) {
-    uint8_t command = data[0];
+void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
+    // 0 is VIA SET VALUE
+    uint8_t command = data[1];
+    uint8_t command_data = data[2];
 
     switch (command) {
         case VOLUME_COMMAND: {
             _globals.hid.available = true;
-            _globals.hid.volume = data[1];
+            _globals.hid.volume = command_data;
             dprintf("vol: %d\n", _globals.hid.volume);
         } break;
 
         case MUTE_COMMAND: {
-            _globals.hid.mute = (bool)data[1];
+            _globals.hid.mute = (bool)command_data;
             dprintf("mute: %d\n", _globals.hid.mute);
         } break;
     }

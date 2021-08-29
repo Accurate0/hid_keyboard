@@ -40,7 +40,6 @@ static uint8_t calc_keycode_to_char(uint8_t keycode, bool shift) {
         }
     }
 
-    dprint("RETURNING 0");
     return 0;
 }
 

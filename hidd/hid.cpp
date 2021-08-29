@@ -320,22 +320,24 @@ void send_buffer(std::optional<HID::Device> &kb_or_null, uint8_t *buffer) {
         kb_or_null->write(buffer, 32);
         char s[32];
         std::wcstombs(s, kb_or_null->error(), 32);
-        spdlog::info("writing: {} {} to {} -> {}", buffer[1], buffer[2], *kb_or_null, s);
+        spdlog::info("writing: {} {} to {} -> {}", buffer[2], buffer[3], *kb_or_null, s);
     }
 }
 
 // buf[0] is the report ID, should be set to 0
 void send_mute(std::optional<HID::Device> &kb_or_null, bool mute) {
     uint8_t buf[32] = {0};
-    buf[1] = HIDCommands::MUTE_COMMAND;
-    buf[2] = static_cast<uint8_t>(mute);
+    buf[1] = HIDCommands::VIA_LIGHTING_SET_VALUE;
+    buf[2] = HIDCommands::MUTE_COMMAND;
+    buf[3] = static_cast<uint8_t>(mute);
     send_buffer(kb_or_null, buf);
 }
 
 void send_volume(std::optional<HID::Device> &kb_or_null, uint8_t volume) {
     uint8_t buf[32] = {0};
-    buf[1] = HIDCommands::VOLUME_COMMAND;
-    buf[2] = volume;
+    buf[1] = HIDCommands::VIA_LIGHTING_SET_VALUE;
+    buf[2] = HIDCommands::VOLUME_COMMAND;
+    buf[3] = volume;
     send_buffer(kb_or_null, buf);
 }
 
