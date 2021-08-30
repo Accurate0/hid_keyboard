@@ -3,6 +3,9 @@
     "cmake.configureOnOpen": true,
     "files.associations": {
         "*.inc": "c",
-        "optional": "cpp"
+        "optional": "cpp",
+        "condition_variable": "cpp",
+        "mutex": "cpp",
+        "thread": "cpp"
     }
 }

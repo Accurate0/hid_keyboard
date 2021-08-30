@@ -34,6 +34,9 @@ typedef struct {
         bool mute;
         uint8_t volume;
     } hid;
+
+    uint16_t rgb_timeout;
+    bool rgb_enabled;
 } globals_t;
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record);

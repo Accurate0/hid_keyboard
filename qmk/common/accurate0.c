@@ -10,12 +10,30 @@ const qk_ucis_symbol_t ucis_symbol_table[] =
     UCIS_TABLE(UCIS_SYM("eyes", 0x1F441, 0x1F445, 0x1F441) //👁👅👁
     );
 
-globals_t _globals = {.color = {.capslock = {RGB_GREEN}},
+globals_t _globals = {.rgb_timeout = 0,
+                      .rgb_enabled = true,
+                      .color = {.capslock = {RGB_GREEN}},
                       .hid = {
                           .available = false,
                           .mute = false,
                           .volume = 80,
                       }};
+
+#define RGB_IDLE_TIMEOUT (5 * 60 * 1000)
+
+void keyboard_post_init_user(void) {
+    // setup initial values
+    _globals.rgb_timeout = timer_read();
+    _globals.rgb_enabled = rgblight_is_enabled();
+}
+
+void matrix_scan_user(void) {
+    // 1000 == 1 second
+    if (_globals.rgb_enabled && timer_elapsed(_globals.rgb_timeout) > RGB_IDLE_TIMEOUT) {
+        _globals.rgb_enabled = false;
+        rgblight_disable_noeeprom();
+    }
+}
 
 void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
     // 0 is VIA SET VALUE
@@ -65,6 +83,13 @@ void flash_and_reset(void) {
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    _globals.rgb_timeout = timer_read();
+
+    if (!_globals.rgb_enabled && record->event.pressed) {
+        rgblight_enable_noeeprom();
+        _globals.rgb_enabled = true;
+    }
+
     if (calc_is_in_progress())
         return calc_process_input(keycode, record);
 
