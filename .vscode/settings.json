@@ -10,7 +10,8 @@
         "quantum.h": "c",
         "wait.h": "c",
         "platform_deps.h": "c",
-        "keymap.h": "c"
+        "keymap.h": "c",
+        "string": "cpp"
     },
     "cSpell.words": [
         "UCIS"
