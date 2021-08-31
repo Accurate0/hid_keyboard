@@ -84,10 +84,9 @@ void flash_and_reset(void) {
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     _globals.rgb_timeout = timer_read32();
-
     if (!_globals.rgb_enabled && record->event.pressed) {
-        rgblight_enable_noeeprom();
         _globals.rgb_enabled = true;
+        rgblight_enable_noeeprom();
     }
 
     if (calc_is_in_progress())
