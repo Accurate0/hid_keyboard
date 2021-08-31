@@ -45,7 +45,11 @@ void matrix_scan_user(void) {
 }
 
 void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
-    // 0 is VIA SET VALUE
+    if(data[0] != VIA_LIGHTING_SET_VALUE) {
+        // via just called us with the wrong command id
+        return;
+    }
+
     uint8_t command = data[1];
     uint8_t command_data = data[2];
 
