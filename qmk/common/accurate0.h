@@ -35,7 +35,7 @@ typedef struct {
         uint8_t volume;
     } hid;
 
-    uint16_t rgb_timeout;
+    uint32_t rgb_timeout;
     bool rgb_enabled;
 } globals_t;
 

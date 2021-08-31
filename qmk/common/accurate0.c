@@ -23,13 +23,13 @@ globals_t _globals = {.rgb_timeout = 0,
 
 void keyboard_post_init_user(void) {
     // setup initial values
-    _globals.rgb_timeout = timer_read();
+    _globals.rgb_timeout = timer_read32();
     _globals.rgb_enabled = rgblight_is_enabled();
 }
 
 void matrix_scan_user(void) {
     // 1000 == 1 second
-    if (_globals.rgb_enabled && timer_elapsed(_globals.rgb_timeout) > RGB_IDLE_TIMEOUT) {
+    if (_globals.rgb_enabled && timer_elapsed32(_globals.rgb_timeout) > RGB_IDLE_TIMEOUT) {
         _globals.rgb_enabled = false;
         rgblight_disable_noeeprom();
     }
@@ -83,7 +83,7 @@ void flash_and_reset(void) {
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    _globals.rgb_timeout = timer_read();
+    _globals.rgb_timeout = timer_read32();
 
     if (!_globals.rgb_enabled && record->event.pressed) {
         rgblight_enable_noeeprom();
@@ -135,7 +135,4 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
 
     return process_record_secrets(keycode, record);
-}
-
-void qk_ucis_start_user(void) {
 }
