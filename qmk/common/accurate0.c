@@ -2,6 +2,15 @@
 #include "calc.h"
 #include "hid_commands.h"
 
+// define the via protocol version supported by the raw_hid_driver
+// ensure we expect the right via id, else raw_hid_handler won't be called
+#define SUPPORTED_VIA_PROTOCOL_VERSION 0x0009
+
+#if VIA_PROTOCOL_VERSION != SUPPORTED_VIA_PROTOCOL_VERSION
+    #warning VIA COMMAND ID FOR LIGHTING MAY HAVE CHANGED
+    #error check: https://github.com/qmk/qmk_firmware/blob/master/quantum/via.h#L68
+#endif
+
 __attribute__((weak)) bool process_record_secrets(uint16_t keycode, keyrecord_t *record) {
     return true;
 }
