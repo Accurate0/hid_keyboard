@@ -1,7 +1,7 @@
 #include "calc.h"
 #include "print.h"
 
-calc_t calc;
+static calc_t calc;
 
 static uint8_t calc_keycode_to_char(uint8_t keycode, bool shift) {
     if (shift) {

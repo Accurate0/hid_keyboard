@@ -39,6 +39,8 @@ typedef struct {
     bool rgb_enabled;
 } globals_t;
 
+extern globals_t _globals;
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record);
 void qk_ucis_start_user(void);
 bool encoder_update_user(uint8_t index, bool clockwise);

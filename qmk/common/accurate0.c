@@ -7,8 +7,8 @@
 #define SUPPORTED_VIA_PROTOCOL_VERSION 0x0009
 
 #if VIA_PROTOCOL_VERSION != SUPPORTED_VIA_PROTOCOL_VERSION
-    #warning VIA COMMAND ID FOR LIGHTING MAY HAVE CHANGED
-    #error check: https://github.com/qmk/qmk_firmware/blob/master/quantum/via.h#L68
+#warning VIA COMMAND ID FOR LIGHTING MAY HAVE CHANGED
+#error check: https://github.com/qmk/qmk_firmware/blob/master/quantum/via.h#L68
 #endif
 
 __attribute__((weak)) bool process_record_secrets(uint16_t keycode, keyrecord_t *record) {
@@ -45,7 +45,7 @@ void matrix_scan_user(void) {
 }
 
 void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
-    if(data[0] != VIA_LIGHTING_SET_VALUE) {
+    if (data[0] != VIA_LIGHTING_SET_VALUE) {
         // via just called us with the wrong command id
         return;
     }
@@ -53,9 +53,11 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
     uint8_t command = data[1];
     uint8_t command_data = data[2];
 
+    // if we receive any data
+    _globals.hid.available = true;
+
     switch (command) {
         case VOLUME_COMMAND: {
-            _globals.hid.available = true;
             _globals.hid.volume = command_data;
             dprintf("vol: %d\n", _globals.hid.volume);
         } break;
