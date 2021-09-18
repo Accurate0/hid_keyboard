@@ -2,8 +2,7 @@
 set -x
 
 clang-format -i \
-    qmk/common/*.c \
-    qmk/keyboards/gmmk/pro/accurate0/*.c \
-    qmk/keyboards/gmmk/pro/accurate0/*.inc \
-    qmk/override/*.c \
+    qmk/common/*.{c,h} \
+    qmk/keyboards/gmmk/pro/accurate0/*.{c,h,inc} \
+    qmk/override/*.{c,h} \
     hidd/hid.cpp
