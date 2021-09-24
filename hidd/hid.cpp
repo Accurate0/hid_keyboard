@@ -51,19 +51,6 @@ void alsa_connect(snd_mixer_t **handle, snd_mixer_elem_t **elem) {
     }
 }
 
-template <typename T> class ScopeGuard {
-  private:
-    T m_callback;
-
-  public:
-    ScopeGuard(T callback) : m_callback(std::move(callback)) {
-    }
-
-    ~ScopeGuard() {
-        m_callback();
-    }
-};
-
 bool get_mute() {
     snd_mixer_t *handle = nullptr;
     snd_mixer_elem_t *elem = nullptr;
@@ -225,6 +212,19 @@ END:
 // defaults -> https://beta.docs.qmk.fm/using-qmk/software-features/feature_rawhid
 #define USAGE      0x61
 #define USAGE_PAGE 0xFF60
+
+template <typename T> class ScopeGuard {
+  private:
+    T m_callback;
+
+  public:
+    ScopeGuard(T callback) : m_callback(std::move(callback)) {
+    }
+
+    ~ScopeGuard() {
+        m_callback();
+    }
+};
 
 class HID {
   public:
