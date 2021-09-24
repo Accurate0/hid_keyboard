@@ -15,6 +15,19 @@
 
 // TODO: add more cool stuff
 
+template <typename T> class ScopeGuard {
+  private:
+    T m_callback;
+
+  public:
+    ScopeGuard(T callback) : m_callback(std::move(callback)) {
+    }
+
+    ~ScopeGuard() {
+        m_callback();
+    }
+};
+
 #if defined(__linux__)
 #include <alsa/asoundlib.h>
 
@@ -212,20 +225,6 @@ END:
 // defaults -> https://beta.docs.qmk.fm/using-qmk/software-features/feature_rawhid
 #define USAGE      0x61
 #define USAGE_PAGE 0xFF60
-
-template <typename T> class ScopeGuard {
-  private:
-    T m_callback;
-
-  public:
-    ScopeGuard(T callback) : m_callback(std::move(callback)) {
-    }
-
-    ~ScopeGuard() {
-        m_callback();
-    }
-};
-
 class HID {
   public:
     static HID hid;
