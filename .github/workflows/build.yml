@@ -8,9 +8,8 @@ jobs:
 
       - name: Check out repository code
         uses: actions/checkout@v2
-
-      - name: Checkout submodules
-        uses: textbook/git-checkout-submodule-action@master
+        with:
+          submodules: recursive
 
       - run: cd hidd
       - run: ./make.sh
@@ -20,9 +19,8 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
-
-      - name: Checkout submodules
-        uses: textbook/git-checkout-submodule-action@master
+        with:
+          submodules: recursive
 
       - name: Set up MinGW
         uses: egor-tensin/setup-mingw@v2
