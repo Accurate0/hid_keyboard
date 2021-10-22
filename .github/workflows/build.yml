@@ -1,7 +1,7 @@
 name: build
 on: [push]
 jobs:
-  linux-build:
+  linux:
     runs-on: ubuntu-latest
     steps:
       - run: sudo apt-get update -y && sudo apt-get install -y libusb-1.0-0-dev libhidapi-hidraw0 libhidapi-dev pkg-config libasound2-dev
@@ -11,10 +11,9 @@ jobs:
         with:
           submodules: recursive
 
-      - run: cd hidd
-      - run: ./make.sh
+      - run: cd hidd && ./make.sh
 
-  windows-build:
+  windows:
     runs-on: windows-latest
     steps:
       - name: Check out repository code
