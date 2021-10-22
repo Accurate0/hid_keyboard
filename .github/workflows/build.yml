@@ -61,20 +61,21 @@ jobs:
     needs: [linux, windows]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v2
+      - name: download linux binary
+        uses: actions/download-artifact@v2
         with:
           name: hid-linux
 
-      - uses: actions/download-artifact@v2
+      - name: download windows binary
+        uses: actions/download-artifact@v2
         with:
           name: hid-windows
 
-      - run: ls
-
-      - uses: "marvinpinto/action-automatic-releases@latest"
+      - name: create release
+        uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "latest"
           prerelease: false
           files: |
-            *.zip
+            *
