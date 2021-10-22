@@ -5,19 +5,28 @@ jobs:
     runs-on: ubuntu-latest
     container: archlinux:base-devel
     steps:
-      - run: sudo pacman -Syu --noconfirm libusb hidapi alsa-lib pkg-config git
+      - name: install deps
+        run: sudo pacman -Syu --noconfirm libusb hidapi alsa-lib git
 
-      - name: Check out repository code
+      - name: clone
         uses: actions/checkout@v2
         with:
           submodules: recursive
 
-      - run: cd hidd && ./make.sh
+      - name: compile
+        run: cd hidd && ./make.sh
+
+      - name: upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: hid-linux
+          path: hidd/hid
+          if-no-files-found: error
 
   windows:
     runs-on: windows-latest
     steps:
-      - name: Setup MSYS2
+      - name: msys2
         uses: msys2/setup-msys2@v2
         with:
           update: true
@@ -26,15 +35,24 @@ jobs:
             base-devel
             pactoys
 
-      - shell: msys2 {0}
+      - name: install deps
+        shell: msys2 {0}
         run: |
           pacboy -S --noconfirm toolchain:x libusb:x hidapi:x make:x
 
-      - name: Check out repository code
+      - name: clone
         uses: actions/checkout@v2
         with:
           submodules: recursive
 
-      - shell: msys2 {0}
+      - name: compile
+        shell: msys2 {0}
         run: |
           cd hidd && ./make.sh
+
+      - name: upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: hid-windows
+          path: hidd/hid.exe
+          if-no-files-found: error
