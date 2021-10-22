@@ -4,7 +4,13 @@ jobs:
   linux-build:
     runs-on: ubuntu-latest
     steps:
-      - run: apt update -y && apt install -y libusb-1.0-0-dev libhidapi-hidraw0 libhidapi-dev pkg-config libasound2-dev
+      - run: sudo apt-get update -y && sudo apt-get install -y \
+            libusb-1.0-0-dev \
+            libhidapi-hidraw0 \
+            libhidapi-dev \
+            pkg-config \
+            libasound2-dev
+
       - name: Check out repository code
         uses: actions/checkout@v2
 
