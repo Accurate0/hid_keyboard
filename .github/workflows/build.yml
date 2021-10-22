@@ -3,6 +3,7 @@ on: [push]
 jobs:
   linux:
     runs-on: ubuntu-latest
+    container: archlinux:base-devel
     steps:
       - run: sudo apt-get update -y && sudo apt-get install -y libusb-1.0-0-dev libhidapi-hidraw0 libhidapi-dev pkg-config libasound2-dev
 
