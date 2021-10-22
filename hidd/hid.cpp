@@ -418,7 +418,8 @@ int main(void) {
         }
     });
 
-    std::thread volume_thread([&] {
+    std::thread volume_thread([&]
+    {
         while (true) {
             snd_ctl_event_t *event = nullptr;
             snd_ctl_event_alloca(&event);
