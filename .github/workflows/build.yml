@@ -29,7 +29,6 @@ jobs:
       - shell: msys2 {0}
         run: |
           pacboy -S --noconfirm toolchain:x libusb:x hidapi:x make:x
-          pacman -Ql mingw-w64-x86_64-libusb
 
       - name: Check out repository code
         uses: actions/checkout@v2
