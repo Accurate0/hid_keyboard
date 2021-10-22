@@ -56,3 +56,23 @@ jobs:
           name: hid-windows
           path: hidd/hid.exe
           if-no-files-found: error
+
+  release:
+    needs: [linux, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: hid-linux
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: hid-windows
+
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: false
+          files: |
+            *.zip
