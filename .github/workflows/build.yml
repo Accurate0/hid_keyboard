@@ -25,7 +25,9 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           update: true
+          release: false
 
       - shell: msys2 {0}
         run: |
+          pacman -S mingw-w64-x86_64-libusb mingw-w64-hidapi mingw-w64-pkg-config mingw-w64-make
           cd hidd && ./make.sh
