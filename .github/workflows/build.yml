@@ -12,7 +12,11 @@ jobs:
         with:
           submodules: recursive
 
-      - run: cd hidd && ./make.sh
+      - uses: actions/upload-artifact@v2
+        with:
+          name: linux-binary
+          path: hidd/hid
+          if-no-files-found: error
 
   windows:
     runs-on: windows-latest
