@@ -19,7 +19,7 @@ jobs:
       - name: upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: linux-binary
+          name: hid-linux
           path: hidd/hid
           if-no-files-found: error
 
@@ -53,6 +53,6 @@ jobs:
       - name: upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: windows-binary
+          name: hid-windows
           path: hidd/hid.exe
           if-no-files-found: error
