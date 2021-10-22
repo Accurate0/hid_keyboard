@@ -6,4 +6,12 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
-      - run: echo "lmfao"
+      - run: ls
+
+
+  windows-build:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - run: dir
