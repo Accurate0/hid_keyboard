@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     container: archlinux:base-devel
     steps:
-      - run: sudo pacman -Syu --noconfirm libusb hidapi alsa-lib pkg-config git
+      - run: sudo pacman -Syu --noconfirm libusb hidapi alsa-lib git
 
       - name: Check out repository code
         uses: actions/checkout@v2
