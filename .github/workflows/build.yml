@@ -22,6 +22,13 @@ jobs:
         with:
           update: true
           release: false
+          install: >-
+            git
+            base-devel
+            mingw-w64-x86_64-libusb
+            mingw-w64-x86_64-hidapi
+            mingw-w64-x86_64-pkg-config
+            mingw-w64-x86_64-make
 
       - name: Check out repository code
         uses: actions/checkout@v2
@@ -29,6 +36,4 @@ jobs:
           submodules: recursive
 
       - shell: msys2 {0}
-        run: |
-          pacman -S --noconfirm mingw-w64-x86_64-libusb mingw-w64-x86_64-hidapi mingw-w64-x86_64-pkg-config mingw-w64-x86_64-make
-          cd hidd && ./make.sh
+        run: cd hidd && ./make.sh
