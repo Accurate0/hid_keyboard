@@ -19,7 +19,7 @@ jobs:
           clang-format-version: '13'
           check-path: 'hidd'
 
-  linux-build:
+  linux:
     needs: format
     runs-on: ubuntu-latest
     container: archlinux:base-devel
@@ -42,7 +42,7 @@ jobs:
           path: hidd/hid
           if-no-files-found: error
 
-  windows-build:
+  windows:
     needs: format
     runs-on: windows-latest
     steps:
@@ -79,7 +79,7 @@ jobs:
 
   release:
     if: github.ref == 'refs/heads/main'
-    needs: [linux-build, windows-build]
+    needs: [linux, windows]
     runs-on: ubuntu-latest
     steps:
       - name: download linux binary
