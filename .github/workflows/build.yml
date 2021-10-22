@@ -24,10 +24,7 @@ jobs:
           install: >-
             git
             base-devel
-            mingw-w64-x86_64-toolchain
-            mingw-w64-x86_64-libusb
-            mingw-w64-x86_64-hidapi
-            mingw-w64-x86_64-make
+            pactoys
 
       - name: Check out repository code
         uses: actions/checkout@v2
@@ -35,4 +32,7 @@ jobs:
           submodules: recursive
 
       - shell: msys2 {0}
-        run: cd hidd && ./make.sh
+        run: |
+        pacman -Ql mingw-w64-x86_65-libusb
+        pacboy -S toolchain:x libusb:x hidapi:x make:x
+        cd hidd && ./make.sh
