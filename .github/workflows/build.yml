@@ -6,7 +6,7 @@ jobs:
     container: archlinux:base-devel
     steps:
       - name: install deps
-        run: sudo pacman -Syu --noconfirm libusb hidapi alsa-lib pkg-config git
+        run: sudo pacman -Syu --noconfirm libusb hidapi alsa-lib git
 
       - name: clone
         uses: actions/checkout@v2
