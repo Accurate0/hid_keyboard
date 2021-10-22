@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     container: archlinux:base-devel
     steps:
-      - run: sudo pacman -Syu --noconfirm && sudo pacman -Syu --noconfirm libusb hidapi alsa-lib pkg-config git
+      - run: sudo pacman -Syu --noconfirm libusb hidapi alsa-lib pkg-config git
 
       - name: Check out repository code
         uses: actions/checkout@v2
@@ -27,7 +27,6 @@ jobs:
             base-devel
             mingw-w64-x86_64-libusb
             mingw-w64-x86_64-hidapi
-            mingw-w64-x86_64-pkg-config
             mingw-w64-x86_64-make
 
       - name: Check out repository code
