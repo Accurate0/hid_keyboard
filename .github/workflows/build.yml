@@ -26,5 +26,6 @@ jobs:
         with:
           update: true
 
-      - run: bash.exe -c 'pacman'
-      - run: bash.exe -c 'cd hidd && ./make.sh'
+      - shell: msys2 {0}
+        run: |
+          cd hidd && ./make.sh
