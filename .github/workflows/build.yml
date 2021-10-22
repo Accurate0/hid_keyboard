@@ -38,5 +38,4 @@ jobs:
 
       - shell: msys2 {0}
         run: |
-          export PKG_CONFIG_PATH=/mingw64/lib/pkgconfig
           cd hidd && ./make.sh
