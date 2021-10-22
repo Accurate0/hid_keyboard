@@ -33,6 +33,6 @@ jobs:
 
       - shell: msys2 {0}
         run: |
-          pacman -Ql mingw-w64-x86_65-libusb
+          pacman -Ql mingw-w64-x86_64-libusb
           pacboy -S toolchain:x libusb:x hidapi:x make:x
           cd hidd && ./make.sh
