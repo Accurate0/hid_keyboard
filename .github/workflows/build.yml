@@ -49,3 +49,10 @@ jobs:
         shell: msys2 {0}
         run: |
           cd hidd && ./make.sh
+
+      - name: upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: windows-binary
+          path: hidd/hid.exe
+          if-no-files-found: error
