@@ -1,7 +1,20 @@
 name: build
 on: [push]
 jobs:
-  linux:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: clone
+        uses: actions/checkout@v2
+
+      - name: format
+        uses: jidicula/clang-format-action@v4.2.0
+        with:
+          clang-format-version: '13'
+          check-path: 'hidd'
+
+  linux-build:
+    needs: format
     runs-on: ubuntu-latest
     container: archlinux:base-devel
     steps:
@@ -23,7 +36,8 @@ jobs:
           path: hidd/hid
           if-no-files-found: error
 
-  windows:
+  windows-build:
+    needs: format
     runs-on: windows-latest
     steps:
       - name: msys2
@@ -59,7 +73,7 @@ jobs:
 
   release:
     if: github.ref == 'refs/heads/main'
-    needs: [linux, windows]
+    needs: [linux-build, windows-build]
     runs-on: ubuntu-latest
     steps:
       - name: download linux binary
