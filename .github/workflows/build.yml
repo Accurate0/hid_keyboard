@@ -1,0 +1,41 @@
+name: build
+on: [push]
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    steps:
+      - run: sudo pacman -Syu --noconfirm libusb hidapi alsa-lib pkg-config git
+
+      - name: Check out repository code
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - run: cd hidd && ./make.sh
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: >-
+            git
+            base-devel
+            pactoys
+
+      - shell: msys2 {0}
+        run: |
+          pacboy -S --noconfirm toolchain:x libusb:x hidapi:x make:x
+          pacman -Ql mingw-w64-x86_64-libusb
+
+      - name: Check out repository code
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - shell: msys2 {0}
+        run: |
+          cd hidd && ./make.sh
