@@ -4,9 +4,11 @@ jobs:
   linux-build:
     runs-on: ubuntu-latest
     steps:
+      - run: apt update -y && apt install -y libusb-1.0-0-dev libhidapi-hidraw0 libhidapi-dev pkg-config libasound2-dev
       - name: Check out repository code
         uses: actions/checkout@v2
-      - run: cd hidd && ./make.sh
+      - run: cd hidd
+      - run: ./make.sh
 
   windows-build:
     runs-on: windows-latest
