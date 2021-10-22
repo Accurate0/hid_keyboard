@@ -6,12 +6,17 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
-      - run: ls
-
+      - run: cd hidd && ./make.sh
 
   windows-build:
     runs-on: windows-latest
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
-      - run: dir
+
+      - name: Set up MinGW
+        uses: egor-tensin/setup-mingw@v2
+        with:
+          platform: x64
+
+      - run: bash.exe -c 'cd hidd && ./make.sh'
