@@ -1,0 +1,50 @@
+name: qmk
+on:
+  push:
+    paths:
+      - 'qmk/**'
+      - '.github/**'
+
+concurrency:
+  group: environment-${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: clone
+        uses: actions/checkout@v2
+
+      - name: format
+        uses: jidicula/clang-format-action@v4.2.0
+        with:
+          clang-format-version: '13'
+          check-path: 'qmk'
+
+  build:
+    needs: format
+    runs-on: ubuntu-latest
+    steps:
+      - name: install deps
+        run: |
+          sudo apt install -y git python3-pip
+          python3 -m pip install --user qmk
+
+      - name: clone
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: install qmk deps
+        run: sudo qmk/qmk_firmware/util/qmk_install.sh
+
+      - name: compile
+        run: cd qmk/qmk_firmware && qmk compile -kb gmmk/pro/ansi -km accurate0 -e NO_SECRETS=yes
+
+      - name: upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: qmk-bin
+          path: qmk/qmk_firmware/.build/gmmk_pro_ansi_accurate0.bin
+          if-no-files-found: error

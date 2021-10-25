@@ -1,9 +1,12 @@
-name: main
-on: [push]
+name: hidd
+on:
+  push:
+    paths:
+      - 'hidd/**'
+      - '.github/**'
 
-# Ensures that only one deploy task per branch/environment will run at a time.
 concurrency:
-  group: environment-${{ github.ref }}
+  group: environment-${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
