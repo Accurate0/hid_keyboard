@@ -41,3 +41,10 @@ jobs:
 
       - name: compile
         run: cd qmk/qmk_firmware && qmk compile -kb gmmk/pro/ansi -km accurate0 -e NO_SECRETS=yes
+
+      - name: upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: qmk-bin
+          path: qmk/qmk_firmware/.build/gmmk_pro_ansi_accurate0.bin
+          if-no-files-found: error
