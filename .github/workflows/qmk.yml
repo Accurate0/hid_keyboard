@@ -3,7 +3,7 @@ on:
   push:
     paths:
       - 'qmk/**'
-      - '.github/qmk.yml'
+      - '.github/**'
 
 concurrency:
   group: environment-${{ github.ref }}-${{ github.workflow }}

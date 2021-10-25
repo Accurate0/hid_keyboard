@@ -3,7 +3,7 @@ on:
   push:
     paths:
       - 'hidd/**'
-      - '.github/hidd.yml'
+      - '.github/**'
 
 concurrency:
   group: environment-${{ github.ref }}-${{ github.workflow }}
