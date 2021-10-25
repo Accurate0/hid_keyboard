@@ -79,3 +79,27 @@ jobs:
           name: hid-windows
           path: hidd/hid.exe
           if-no-files-found: error
+
+  release:
+    if: github.ref == 'refs/heads/main'
+    needs: [linux, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: download linux binary
+        uses: actions/download-artifact@v2
+        with:
+          name: hid-linux
+
+      - name: download windows binary
+        uses: actions/download-artifact@v2
+        with:
+          name: hid-windows
+
+      - name: create release
+        uses: softprops/action-gh-release@v1
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          name: "latest"
+          tag_name: "latest"
+          files: |
+            *
