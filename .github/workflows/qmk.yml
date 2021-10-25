@@ -31,5 +31,10 @@ jobs:
           sudo apt install -y git python3-pip
           python3 -m pip install --user qmk
 
+      - name: clone
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
       - name: compile
         run: cd qmk/qmk_firmware && qmk compile
