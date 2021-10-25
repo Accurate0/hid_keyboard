@@ -36,5 +36,8 @@ jobs:
         with:
           submodules: recursive
 
+      - name: install qmk deps
+        run: sudo qmk/qmk_firmware/util/qmk_install.sh
+
       - name: compile
         run: cd qmk/qmk_firmware && qmk compile -kb gmmk/pro/ansi -km accurate0
