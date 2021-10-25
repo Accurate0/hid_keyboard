@@ -1,5 +1,8 @@
 name: hidd
-on: [push]
+on:
+  push:
+    paths:
+      - 'hidd/**'
 
 concurrency:
   group: environment-${{ github.ref }}-${{ github.workflow }}

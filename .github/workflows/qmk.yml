@@ -1,5 +1,8 @@
 name: qmk
-on: [push]
+on:
+  push:
+    paths:
+      - 'qmk/**'
 
 concurrency:
   group: environment-${{ github.ref }}-${{ github.workflow }}
