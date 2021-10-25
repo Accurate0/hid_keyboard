@@ -1,0 +1,43 @@
+name: main
+on: [push]
+
+# Ensures that only one deploy task per branch/environment will run at a time.
+concurrency:
+  group: environment-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: clone
+        uses: actions/checkout@v2
+
+      - name: format
+        uses: jidicula/clang-format-action@v4.2.0
+        with:
+          clang-format-version: '13'
+          check-path: 'qmk'
+
+  build:
+    needs: format
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    steps:
+      - name: install deps
+        run: sudo pacman -Syu --noconfirm libusb hidapi alsa-lib git
+
+      - name: clone
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: compile
+        run: cd hidd && ./make.sh
+
+      - name: upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: hid-linux
+          path: hidd/hid
+          if-no-files-found: error
