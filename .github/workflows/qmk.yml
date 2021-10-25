@@ -48,22 +48,3 @@ jobs:
           name: qmk-bin
           path: qmk/qmk_firmware/.build/gmmk_pro_ansi_accurate0.bin
           if-no-files-found: error
-
-  release:
-    if: github.ref == 'refs/heads/main'
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: download linux binary
-        uses: actions/download-artifact@v2
-        with:
-          name: qmk-bin
-
-      - name: create release
-        uses: marvinpinto/action-automatic-releases@v1.2.1
-        with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "latest-qmk"
-          prerelease: false
-          files: |
-            *
