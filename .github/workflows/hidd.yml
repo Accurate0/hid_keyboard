@@ -98,7 +98,7 @@ jobs:
       - name: create release
         uses: softprops/action-gh-release@v1
         with:
-          name: "latest-${{ github.sha::8 }}"
+          name: "latest-${GITHUB_SHA::8}"
           tag_name: "latest"
           body: ""
           fail_on_unmatched_files: true
