@@ -35,8 +35,15 @@ typedef struct {
         uint8_t volume;
     } hid;
 
-    uint32_t rgb_timeout;
-    bool rgb_enabled;
+    struct {
+        bool enabled;
+    } rgb;
+
+    struct {
+        uint32_t last_press;
+        uint32_t last_encoder;
+    } key;
+
 } globals_t;
 
 extern globals_t _globals;

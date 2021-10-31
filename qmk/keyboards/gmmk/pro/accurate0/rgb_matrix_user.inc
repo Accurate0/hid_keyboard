@@ -29,7 +29,7 @@ bool REACTIVE_effect_runner(uint8_t start, effect_params_t *params, reactive_spl
         uint8_t count = g_last_hit_tracker.count;
         // left side light or maybe right if no hid
         uint8_t finish = _globals.hid.available ? 90 : 97;
-        for (uint8_t i = 82; i < finish; i++) {
+        for (uint8_t i = 82; i <= finish; i++) {
             RGB_MATRIX_TEST_LED_FLAGS();
             HSV hsv = {9, 150, 0};
             for (uint8_t j = start; j < count; j++) {

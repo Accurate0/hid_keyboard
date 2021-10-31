@@ -19,28 +19,43 @@ const qk_ucis_symbol_t ucis_symbol_table[] =
     UCIS_TABLE(UCIS_SYM("eyes", 0x1F441, 0x1F445, 0x1F441) //👁👅👁
     );
 
-globals_t _globals = {.rgb_timeout = 0,
-                      .rgb_enabled = true,
+globals_t _globals = {.key =
+                          {
+                              .last_press = 0,
+                              .last_encoder = 0,
+
+                          },
+                      .rgb =
+                          {
+                              .enabled = true,
+
+                          },
                       .color = {.capslock = {RGB_GREEN}},
                       .hid = {
                           .available = false,
                           .mute = false,
-                          .volume = 80,
+                          .volume = 0,
                       }};
 
-#define RGB_IDLE_TIMEOUT (5 * 60 * 1000)
+#define RGB_IDLE_TIMEOUT   (5 * 60 * 1000)
+#define RGB_VOLUME_TIMEOUT (2 * 1000)
 
 void keyboard_post_init_user(void) {
     // setup initial values
-    _globals.rgb_timeout = timer_read32();
-    _globals.rgb_enabled = rgblight_is_enabled();
+    _globals.key.last_encoder = timer_read32();
+    _globals.key.last_press = timer_read32();
+    _globals.rgb.enabled = rgblight_is_enabled();
 }
 
 void matrix_scan_user(void) {
     // 1000 == 1 second
-    if (_globals.rgb_enabled && timer_elapsed32(_globals.rgb_timeout) > RGB_IDLE_TIMEOUT) {
-        _globals.rgb_enabled = false;
+    if (_globals.rgb.enabled && timer_elapsed32(_globals.key.last_press) > RGB_IDLE_TIMEOUT) {
+        _globals.rgb.enabled = false;
         rgblight_disable_noeeprom();
+    }
+
+    if (_globals.hid.available && timer_elapsed32(_globals.key.last_encoder) > RGB_VOLUME_TIMEOUT) {
+        _globals.hid.available = false;
     }
 }
 
@@ -71,13 +86,16 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
 
 bool encoder_update_user(uint8_t index, bool clockwise) {
     switch (get_highest_layer(layer_state)) {
-        case LY_BASE:
+        case LY_BASE: {
+            _globals.key.last_encoder = timer_read32();
+
             if (clockwise) {
                 tap_code(KC_VOLU);
             } else {
                 tap_code(KC_VOLD);
             }
-            break;
+
+        } break;
 
         case LY_FUNC:
             if (clockwise) {
@@ -98,9 +116,9 @@ void flash_and_reset(void) {
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    _globals.rgb_timeout = timer_read32();
-    if (!_globals.rgb_enabled && record->event.pressed) {
-        _globals.rgb_enabled = true;
+    _globals.key.last_press = timer_read32();
+    if (!_globals.rgb.enabled && record->event.pressed) {
+        _globals.rgb.enabled = true;
         rgblight_enable_noeeprom();
     }
 
@@ -108,6 +126,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return calc_process_input(keycode, record);
 
     switch (keycode) {
+        case KC_MUTE:
+            if (record->event.pressed) {
+                _globals.key.last_encoder = timer_read32();
+                return true;
+            }
+            break;
+
         case KC_CAPS:
             if (record->event.pressed) {
                 _globals.color.capslock.r = rand() % 255;
