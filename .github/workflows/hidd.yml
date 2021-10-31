@@ -100,5 +100,7 @@ jobs:
         with:
           name: "latest"
           tag_name: "latest"
+          fail_on_unmatched_files: true
+          target_commitish: ${{ github.sha }}
           files: |
             *
