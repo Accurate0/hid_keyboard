@@ -134,7 +134,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             break;
 
         case KC_CAPS:
-            if (record->event.pressed) {
+            if (record->event.pressed && !host_keyboard_led_state().caps_lock) {
                 _globals.color.capslock.r = rand() % 255;
                 _globals.color.capslock.g = rand() % 255;
                 _globals.color.capslock.b = rand() % 255;
