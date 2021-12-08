@@ -23,7 +23,6 @@ jobs:
           check-path: 'hidd'
 
   linux:
-    needs: format
     runs-on: ubuntu-latest
     container: archlinux:base-devel
     steps:
@@ -46,7 +45,6 @@ jobs:
           if-no-files-found: error
 
   windows:
-    needs: format
     runs-on: windows-latest
     steps:
       - name: msys2

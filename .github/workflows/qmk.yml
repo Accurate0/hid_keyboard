@@ -23,7 +23,6 @@ jobs:
           check-path: 'qmk'
 
   build:
-    needs: format
     runs-on: ubuntu-latest
     steps:
       - name: install deps
