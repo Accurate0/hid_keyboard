@@ -37,8 +37,10 @@ globals_t _globals = {.key =
                           .volume = 0,
                       }};
 
-#define RGB_IDLE_TIMEOUT   (5 * 60 * 1000)
-#define RGB_VOLUME_TIMEOUT (1 * 60 * 1000)
+#define MINUTES (60 * 1000)
+
+#define RGB_IDLE_TIMEOUT   (5 * MINUTES)
+#define RGB_VOLUME_TIMEOUT (5 * MINUTES)
 
 void keyboard_post_init_user(void) {
     // setup initial values
