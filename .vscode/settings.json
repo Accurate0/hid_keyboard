@@ -11,7 +11,10 @@
         "wait.h": "c",
         "platform_deps.h": "c",
         "keymap.h": "c",
-        "string": "cpp"
+        "string": "cpp",
+        "accurate0.h": "c",
+        "raw_hid.h": "c",
+        "print.h": "c"
     },
     "cSpell.words": [
         "UCIS"

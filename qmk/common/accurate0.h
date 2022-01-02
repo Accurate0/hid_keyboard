@@ -36,10 +36,6 @@ typedef struct {
     } hid;
 
     struct {
-        bool enabled;
-    } rgb;
-
-    struct {
         uint32_t last_press;
         uint32_t last_encoder;
     } key;

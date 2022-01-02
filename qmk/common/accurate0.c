@@ -25,11 +25,6 @@ globals_t _globals = {.key =
                               .last_encoder = 0,
 
                           },
-                      .rgb =
-                          {
-                              .enabled = true,
-
-                          },
                       .color = {.capslock = {RGB_GREEN}},
                       .hid = {
                           .available = false,
@@ -46,13 +41,11 @@ void keyboard_post_init_user(void) {
     // setup initial values
     _globals.key.last_encoder = timer_read32();
     _globals.key.last_press = timer_read32();
-    _globals.rgb.enabled = rgblight_is_enabled();
 }
 
 void matrix_scan_user(void) {
     // 1000 == 1 second
-    if (_globals.rgb.enabled && timer_elapsed32(_globals.key.last_press) > RGB_IDLE_TIMEOUT) {
-        _globals.rgb.enabled = false;
+    if (rgblight_is_enabled() && timer_elapsed32(_globals.key.last_press) > RGB_IDLE_TIMEOUT) {
         rgblight_disable_noeeprom();
     }
 
@@ -119,8 +112,7 @@ void flash_and_reset(void) {
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     _globals.key.last_press = timer_read32();
-    if (!_globals.rgb.enabled && record->event.pressed) {
-        _globals.rgb.enabled = true;
+    if (!rgblight_is_enabled() && record->event.pressed) {
         rgblight_enable_noeeprom();
     }
 
