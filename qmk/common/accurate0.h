@@ -9,6 +9,7 @@ enum
     KC_WPM,
     KC_CAL,
     KC_FSH,
+    KC_KAL,
     KC_SC1,
     KC_SC2,
     KC_SC3,
@@ -39,6 +40,11 @@ typedef struct {
         uint32_t last_press;
         uint32_t last_encoder;
     } key;
+
+    struct {
+        bool enabled;
+        uint32_t last_keepalive;
+    } keepalive;
 
 } globals_t;
 

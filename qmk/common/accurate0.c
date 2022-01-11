@@ -26,21 +26,27 @@ globals_t _globals = {.key =
 
                           },
                       .color = {.capslock = {RGB_GREEN}},
-                      .hid = {
-                          .available = false,
-                          .mute = false,
-                          .volume = 0,
+                      .hid =
+                          {
+                              .available = false,
+                              .mute = false,
+                              .volume = 0,
+                          },
+                      .keepalive = {
+                          .enabled = false,
                       }};
 
 #define MINUTES (60 * 1000)
 
-#define RGB_IDLE_TIMEOUT   (5 * MINUTES)
-#define RGB_VOLUME_TIMEOUT (5 * MINUTES)
+#define RGB_IDLE_TIMEOUT       (5 * MINUTES)
+#define RGB_VOLUME_TIMEOUT     (5 * MINUTES)
+#define KEEPALIVE_TIME_BETWEEN (1 * MINUTES)
 
 void keyboard_post_init_user(void) {
     // setup initial values
     _globals.key.last_encoder = timer_read32();
     _globals.key.last_press = timer_read32();
+    _globals.keepalive.last_keepalive = timer_read32();
 }
 
 void matrix_scan_user(void) {
@@ -51,6 +57,14 @@ void matrix_scan_user(void) {
 
     if (_globals.hid.available && timer_elapsed32(_globals.key.last_encoder) > RGB_VOLUME_TIMEOUT) {
         _globals.hid.available = false;
+    }
+
+    if (_globals.keepalive.enabled &&
+        timer_elapsed32(_globals.keepalive.last_keepalive) > KEEPALIVE_TIME_BETWEEN)
+    {
+        // send a f13 every minute when this is enabled
+        _globals.keepalive.last_keepalive = timer_read32();
+        tap_code(KC_F13);
     }
 }
 
@@ -110,6 +124,10 @@ void flash_and_reset(void) {
     reset_keyboard();
 }
 
+void keepalive_toggle(void) {
+    _globals.keepalive.enabled = !_globals.keepalive.enabled;
+}
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     _globals.key.last_press = timer_read32();
     if (!rgblight_is_enabled() && record->event.pressed) {
@@ -165,6 +183,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 return false;
             }
             break;
+
+        case KC_KAL:
+            if (record->event.pressed) {
+                keepalive_toggle();
+                return false;
+            }
     }
 
     return process_record_secrets(keycode, record);

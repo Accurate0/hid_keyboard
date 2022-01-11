@@ -66,6 +66,10 @@ bool REACTIVE_effect_runner(uint8_t start, effect_params_t *params, reactive_spl
         }
     }
 
+    // 72 = space
+    _globals.keepalive.enabled ? rgb_matrix_set_color(72, RGB_RED)
+                               : rgb_matrix_set_color(72, RGB_BLACK);
+
     return led_max < DRIVER_LED_TOTAL;
 }
 
