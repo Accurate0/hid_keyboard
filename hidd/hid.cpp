@@ -459,7 +459,7 @@ int main(void) {
         send_mute(kb_or_null, mute);
     });
     while (true) {
-        Sleep(1000);
+        Sleep(50000);
     }
 #endif
 
