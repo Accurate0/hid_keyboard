@@ -25,7 +25,7 @@ globals_t _globals = {.key =
                               .last_encoder = 0,
 
                           },
-                      .color = {.capslock = {RGB_GREEN}},
+                      .color = {.capslock = {RGB_GREEN}, .disable_purpose = false},
                       .hid =
                           {
                               .available = false,
@@ -47,6 +47,7 @@ void keyboard_post_init_user(void) {
     _globals.key.last_encoder = timer_read32();
     _globals.key.last_press = timer_read32();
     _globals.keepalive.last_keepalive = timer_read32();
+    _globals.color.disable_purpose = !rgblight_is_enabled();
 }
 
 void matrix_scan_user(void) {
@@ -130,7 +131,7 @@ void keepalive_toggle(void) {
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     _globals.key.last_press = timer_read32();
-    if (!rgblight_is_enabled() && record->event.pressed) {
+    if (!rgblight_is_enabled() && record->event.pressed && _globals.color.disable_purpose) {
         rgblight_enable_noeeprom();
     }
 
@@ -189,6 +190,20 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 keepalive_toggle();
                 return false;
             }
+            break;
+
+        case KC_LIG:
+            if (record->event.pressed) {
+                _globals.color.disable_purpose = !rgblight_is_enabled();
+                if (rgblight_is_enabled()) {
+                    rgblight_disable();
+                    dprintf("disable\n");
+                } else {
+                    rgblight_enable();
+                    dprintf("enable\n");
+                }
+            }
+            break;
     }
 
     return process_record_secrets(keycode, record);

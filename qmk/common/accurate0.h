@@ -10,6 +10,7 @@ enum
     KC_CAL,
     KC_FSH,
     KC_KAL,
+    KC_LIG,
     KC_SC1,
     KC_SC2,
     KC_SC3,
@@ -28,6 +29,7 @@ enum Layers
 typedef struct {
     struct {
         RGB capslock;
+        bool disable_purpose;
     } color;
 
     struct {
