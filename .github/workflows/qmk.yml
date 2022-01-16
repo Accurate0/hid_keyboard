@@ -10,18 +10,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  format:
-    runs-on: ubuntu-latest
-    steps:
-      - name: clone
-        uses: actions/checkout@v2
-
-      - name: format
-        uses: jidicula/clang-format-action@v4.2.0
-        with:
-          clang-format-version: '13'
-          check-path: 'qmk'
-
   build:
     runs-on: ubuntu-latest
     steps:
