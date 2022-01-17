@@ -131,7 +131,7 @@ void keepalive_toggle(void) {
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     _globals.key.last_press = timer_read32();
-    if (!rgblight_is_enabled() && record->event.pressed && _globals.color.disable_purpose) {
+    if (!_globals.color.disable_purpose && !rgblight_is_enabled() && record->event.pressed) {
         rgblight_enable_noeeprom();
     }
 
@@ -194,8 +194,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
         case KC_LIG:
             if (record->event.pressed) {
-                _globals.color.disable_purpose = !rgblight_is_enabled();
-                if (rgblight_is_enabled()) {
+                bool rgb_enabled = rgblight_is_enabled();
+                _globals.color.disable_purpose = !_globals.color.disable_purpose;
+                if (rgb_enabled) {
                     rgblight_disable();
                     dprintf("disable\n");
                 } else {
