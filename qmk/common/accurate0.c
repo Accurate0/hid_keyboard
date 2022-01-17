@@ -65,7 +65,8 @@ void matrix_scan_user(void) {
     {
         // send a f13 every minute when this is enabled
         _globals.keepalive.last_keepalive = timer_read32();
-        tap_code(KC_F13);
+        // gnome has a keybind for F13...
+        tap_code(KC_F24);
     }
 }
 
