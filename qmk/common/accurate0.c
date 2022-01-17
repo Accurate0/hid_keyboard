@@ -95,10 +95,9 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
 }
 
 bool encoder_update_user(uint8_t index, bool clockwise) {
+    _globals.key.last_encoder = timer_read32();
     switch (get_highest_layer(layer_state)) {
         case LY_BASE: {
-            _globals.key.last_encoder = timer_read32();
-
             if (clockwise) {
                 tap_code(KC_VOLU);
             } else {
