@@ -19,6 +19,8 @@ const qk_ucis_symbol_t ucis_symbol_table[] =
     UCIS_TABLE(UCIS_SYM("eyes", 0x1F441, 0x1F445, 0x1F441) //👁👅👁
     );
 
+void rgbtimeout_check(bool pressed);
+
 globals_t _globals = {.key =
                           {
                               .last_press = 0,
@@ -97,6 +99,8 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
 
 bool encoder_update_user(uint8_t index, bool clockwise) {
     _globals.key.last_encoder = timer_read32();
+    rgbtimeout_check(true);
+
     switch (get_highest_layer(layer_state)) {
         case LY_BASE: {
             if (clockwise) {
@@ -129,12 +133,15 @@ void keepalive_toggle(void) {
     _globals.keepalive.enabled = !_globals.keepalive.enabled;
 }
 
-bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+void rgbtimeout_check(bool pressed) {
     _globals.key.last_press = timer_read32();
-    if (!_globals.color.disable_purpose && !rgblight_is_enabled() && record->event.pressed) {
+    if (!_globals.color.disable_purpose && !rgblight_is_enabled() && pressed) {
         rgblight_enable_noeeprom();
     }
+}
 
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    rgbtimeout_check(record->event.pressed);
     if (calc_is_in_progress())
         return calc_process_input(keycode, record);
 
