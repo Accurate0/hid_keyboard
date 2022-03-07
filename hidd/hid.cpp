@@ -1,6 +1,3 @@
-// clang-format off
-#include <loguru.cpp>
-// clang-format on
 
 #include <hidapi.h>
 #include <libusb.h>
@@ -12,6 +9,10 @@
 #include <mutex>
 #include <optional>
 
+#define INFO    "INFO"
+#define WARNING "WARNING"
+#define ERROR   "ERROR"
+#define LOG_F(type, msg, ...)
 // TODO: add more cool stuff
 
 template <typename T> class ScopeGuard {
@@ -242,7 +243,7 @@ class HID {
         hid_device *m_handle{nullptr};
 
       public:
-        constexpr Device(const HID::Device&) = delete;
+        constexpr Device(const HID::Device &) = delete;
         Device(hid_device *handle) : m_handle(handle) {
         }
 
@@ -319,7 +320,8 @@ void send_buffer(std::optional<HID::Device> &kb_or_null, uint8_t *buffer) {
         kb_or_null->write(buffer, 32);
         char s[32];
         std::wcstombs(s, kb_or_null->error(), 32);
-        LOG_F(INFO, "writing: %d %d to %s -> %s", buffer[2], buffer[3], kb_or_null.value().product().c_str(), s);
+        LOG_F(INFO, "writing: %d %d to %s -> %s", buffer[2], buffer[3],
+              kb_or_null.value().product().c_str(), s);
     }
 }
 
@@ -445,7 +447,7 @@ int main(void) {
 
     LOG_F(INFO, "setting up hotplug callback");
     LOG_F(INFO, "libusb hotplug support = %s",
-                 (libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG) ? "true" : "false"));
+          (libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG) ? "true" : "false"));
 
 #if defined(__MINGW32__)
     CAudioEndpointVolumeCallback callback = {
