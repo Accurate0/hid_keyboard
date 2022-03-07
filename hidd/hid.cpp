@@ -1,4 +1,3 @@
-
 #include <hidapi.h>
 #include <libusb.h>
 
