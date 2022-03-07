@@ -1,6 +1,5 @@
 // clang-format off
-#include <spdlog/spdlog.h>
-#include <spdlog/fmt/ostr.h>
+#include <loguru.cpp>
 // clang-format on
 
 #include <hidapi.h>
@@ -243,6 +242,7 @@ class HID {
         hid_device *m_handle{nullptr};
 
       public:
+        constexpr HID::Device::Device(const HID::Device&) = delete;
         Device(hid_device *handle) : m_handle(handle) {
         }
 
@@ -291,15 +291,6 @@ class HID {
             hid_close(m_handle);
         }
 
-        template <typename OStream> friend OStream &operator<<(OStream &os, const Device &dev) {
-            wchar_t product[32];
-            char utf8_prod[32];
-            hid_get_product_string(dev.m_handle, product, 32);
-            std::wcstombs(utf8_prod, product, 32);
-
-            return os << utf8_prod;
-        }
-
         int write(uint8_t *buf, int size) {
             return hid_write(m_handle, buf, size);
         }
@@ -311,6 +302,15 @@ class HID {
         const wchar_t *error() {
             return hid_error(m_handle);
         }
+
+        const std::string product() {
+            wchar_t product[32];
+            char utf8_prod[32];
+            hid_get_product_string(m_handle, product, 32);
+            std::wcstombs(utf8_prod, product, 32);
+
+            return std::string(utf8_prod);
+        }
     };
 };
 
@@ -319,7 +319,7 @@ void send_buffer(std::optional<HID::Device> &kb_or_null, uint8_t *buffer) {
         kb_or_null->write(buffer, 32);
         char s[32];
         std::wcstombs(s, kb_or_null->error(), 32);
-        spdlog::info("writing: {} {} to {} -> {}", buffer[2], buffer[3], *kb_or_null, s);
+        LOG_F(INFO, "writing: %d %d to %s -> %s", buffer[2], buffer[3], kb_or_null.value().product().c_str(), s);
     }
 }
 
@@ -344,12 +344,11 @@ void send_volume(std::optional<HID::Device> &kb_or_null, uint8_t volume) {
 std::mutex g_protect_handle;
 
 int main(void) {
-    spdlog::set_pattern("[%^%7l%$]: %v");
     libusb_init(nullptr);
     const libusb_version *libusb_ver = libusb_get_version();
-    spdlog::info("libusb: v{}.{}.{}", libusb_ver->major, libusb_ver->minor, libusb_ver->micro);
+    LOG_F(INFO, "libusb: v%d.%d.%d", libusb_ver->major, libusb_ver->minor, libusb_ver->micro);
     const struct hid_api_version *hidapi_ver = hid_version();
-    spdlog::info("hidapi: v{}.{}.{}", hidapi_ver->major, hidapi_ver->minor, hidapi_ver->patch);
+    LOG_F(INFO, "hidapi: v%d.%d.%d", hidapi_ver->major, hidapi_ver->minor, hidapi_ver->patch);
 
     ScopeGuard guard = [&] { libusb_exit(nullptr); };
 
@@ -358,9 +357,9 @@ int main(void) {
     // doesn't matter if we fail, on linux we setup a hotplug handler
 
     if (kb_or_null.has_value()) {
-        spdlog::info("device connected: {}", *kb_or_null);
+        LOG_F(INFO, "device connected: %s", kb_or_null.value().product().c_str());
     } else {
-        spdlog::info("no kb detected");
+        LOG_F(INFO, "no kb detected");
     }
 
 #if defined(__linux__)
@@ -382,7 +381,7 @@ int main(void) {
                 HID::Device::construct_handle(VENDOR_ID, PRODUCT_ID, USAGE, USAGE_PAGE);
             if (new_handle_or_null != nullptr) {
                 kb_or_null->emplace(new_handle_or_null);
-                spdlog::info("device connected: {}", **kb_or_null);
+                LOG_F(INFO, "device connected: {}", **kb_or_null);
 
                 // provide initial state
                 send_mute(*kb_or_null, get_mute());
@@ -391,7 +390,7 @@ int main(void) {
                 spdlog::warn("received arrival event but no connection made, no perms possibly?");
             }
         } else if (event == LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT) {
-            spdlog::info("disconnected from device");
+            LOG_F(INFO, "disconnected from device");
             kb_or_null->reset();
         } else {
             spdlog::error("unhandled event");
@@ -444,8 +443,8 @@ int main(void) {
     volume_thread.join();
 #endif
 
-    spdlog::info("setting up hotplug callback");
-    spdlog::info("libusb hotplug support = {}",
+    LOG_F(INFO, "setting up hotplug callback");
+    LOG_F(INFO, "libusb hotplug support = %s",
                  (libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG) ? "true" : "false"));
 
 #if defined(__MINGW32__)

@@ -2,6 +2,6 @@
 	path = qmk/qmk_firmware
 	url = git@github.com:Accurate0/qmk_firmware.git
 	branch = develop
-[submodule "hidd/spdlog"]
-	path = hidd/spdlog
-	url = https://github.com/gabime/spdlog.git
+[submodule "hidd/loguru"]
+	path = hidd/loguru
+	url = https://github.com/emilk/loguru.git

@@ -14,7 +14,8 @@
         "string": "cpp",
         "accurate0.h": "c",
         "raw_hid.h": "c",
-        "print.h": "c"
+        "print.h": "c",
+        "type_traits": "cpp"
     },
     "cSpell.words": [
         "UCIS"
