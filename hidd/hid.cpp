@@ -381,19 +381,19 @@ int main(void) {
                 HID::Device::construct_handle(VENDOR_ID, PRODUCT_ID, USAGE, USAGE_PAGE);
             if (new_handle_or_null != nullptr) {
                 kb_or_null->emplace(new_handle_or_null);
-                LOG_F(INFO, "device connected: {}", **kb_or_null);
+                LOG_F(INFO, "device connected: %s", kb_or_null.value().product().c_str());
 
                 // provide initial state
                 send_mute(*kb_or_null, get_mute());
                 send_volume(*kb_or_null, get_volume());
             } else {
-                spdlog::warn("received arrival event but no connection made, no perms possibly?");
+                LOG_F(WARN, "received arrival event but no connection made, no perms possibly?");
             }
         } else if (event == LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT) {
             LOG_F(INFO, "disconnected from device");
             kb_or_null->reset();
         } else {
-            spdlog::error("unhandled event");
+            LOG_F(ERROR, "unhandled event");
         }
 
         return 0;
