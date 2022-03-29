@@ -1,5 +1,5 @@
 CC=c++
-CFLAGS=-Wall $(shell pkg-config --cflags libusb-1.0 hidapi-hidraw alsa) -I./loguru -fpermissive -std=c++17 -pthread -fno-exceptions
+CFLAGS=-Wall $(shell pkg-config --cflags libusb-1.0 hidapi-hidraw alsa) -fpermissive -std=c++17 -pthread
 LDFLAGS=$(shell pkg-config --libs libusb-1.0 hidapi-hidraw alsa)
 
 hid: hid.cpp

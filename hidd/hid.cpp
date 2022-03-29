@@ -8,11 +8,8 @@
 #include <mutex>
 #include <optional>
 
-#define INFO    "INFO"
-#define WARNING "WARNING"
-#define ERROR   "ERROR"
-#define LOG_F(type, msg, ...)
-// TODO: add more cool stuff
+#include "exprtk/exprtk.hpp"
+#include "loguru/loguru.cpp"
 
 template <typename T> class ScopeGuard {
   private:
@@ -439,7 +436,40 @@ int main(void) {
             }
         }
     });
+#endif
 
+    std::thread receive_thread([&] {
+        while (true) {
+            if (kb_or_null.has_value()) {
+                uint8_t buf[32];
+                auto res = kb_or_null->read(buf, 32);
+
+                if (buf[0] == HIDCommands::CALC_REQUEST) {
+                    double output;
+                    auto s = std::string(reinterpret_cast<char *>(buf + 1));
+                    auto r = exprtk::compute<double>(s, output);
+
+                    LOG_F(INFO, "calc: %lf -> %d", output, r);
+
+                    if (r) {
+                        uint8_t reply_buf[32] = {0};
+                        reply_buf[1] = HIDCommands::VIA_LIGHTING_SET_VALUE;
+                        reply_buf[2] = HIDCommands::CALC_REPLY;
+                        int i = 3;
+                        for (char c : std::to_string(output)) {
+                            if (i < 32) {
+                                reply_buf[i] = c;
+                                i++;
+                            }
+                        }
+                        send_buffer(kb_or_null, reply_buf);
+                    }
+                }
+            }
+        }
+    });
+
+#if defined(__linux__)
     libusb_thread.join();
     volume_thread.join();
 #endif

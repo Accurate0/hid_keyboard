@@ -94,6 +94,12 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
             _globals.hid.mute = (bool)command_data;
             dprintf("mute: %d\n", _globals.hid.mute);
         } break;
+
+        case CALC_REPLY:
+            const char *answer = (char *)(data + 2);
+            dprintf("calc: %s\n", answer);
+            send_string(answer);
+            break;
     }
 }
 

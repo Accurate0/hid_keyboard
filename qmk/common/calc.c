@@ -1,5 +1,7 @@
 #include "calc.h"
+#include "hid_commands.h"
 #include "print.h"
+#include "raw_hid.h"
 
 static calc_t calc;
 
@@ -62,9 +64,12 @@ void calc_add(uint16_t keycode, bool shift) {
 }
 
 void calc_evaluate(void) {
-    calc.chars[calc.count] = 0;
-    dprintf("output -> %d:%s \n", calc.count, calc.chars);
-    send_string((const char *)calc.chars);
+    uint8_t buf[32] = {CALC_REQUEST};
+    memcpy(buf + 1, calc.chars, calc.count);
+    raw_hid_send(buf, 32);
+
+    memset(calc.chars, 0, calc.count);
+    calc.count = 0;
 }
 
 bool calc_process_input(uint16_t keycode, keyrecord_t *record) {
