@@ -95,11 +95,11 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
             dprintf("mute: %d\n", _globals.hid.mute);
         } break;
 
-        case CALC_REPLY:
+        case CALC_REPLY: {
             const char *answer = (char *)(data + 2);
             dprintf("calc: %s\n", answer);
             send_string(answer);
-            break;
+        } break;
     }
 }
 
