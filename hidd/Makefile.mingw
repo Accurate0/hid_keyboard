@@ -1,5 +1,5 @@
 CC=c++
-CFLAGS=-Wall $(shell pkg-config --cflags libusb-1.0 hidapi) -fpermissive -std=c++17 -Wl,-subsystem,windows -Os
+CFLAGS=-Wall $(shell pkg-config --cflags libusb-1.0 hidapi) -fpermissive -std=c++17 -Wl,-subsystem,windows -Wa,-mbig-obj
 LDFLAGS=$(shell pkg-config --libs libusb-1.0 hidapi) -lwinmm -lole32 -luuid -lsetupapi -static
 
 hid: hid.cpp
