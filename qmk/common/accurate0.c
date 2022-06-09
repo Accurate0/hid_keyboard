@@ -41,8 +41,8 @@ eeprom_config_t _eeprom_config;
 
 void eeconfig_init_user(void) {
     _eeprom_config.raw = 0;
-    _eeprom_config.hid.disabled = false;
-    _eeprom_config.effect.disabled = false;
+    _eeprom_config.hid.disabled = true;
+    _eeprom_config.effect.disabled = true;
     eeconfig_update_user(_eeprom_config.raw);
 }
 
@@ -129,7 +129,7 @@ void keepalive_toggle(void) {
 
 void rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
     if (host_keyboard_led_state().caps_lock) {
-        rgb_matrix_set_color(15, _globals.color.capslock.r, _globals.color.capslock.b,
+        rgb_matrix_set_color(86, _globals.color.capslock.r, _globals.color.capslock.b,
                              _globals.color.capslock.g);
     } else {
         rgb_matrix_set_color(5, 0, 0, 0);
@@ -150,9 +150,8 @@ void rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
         }
     }
 
-    // 72 = space
     if (_globals.keepalive.enabled) {
-        rgb_matrix_set_color(72, RGB_RED);
+        rgb_matrix_set_color(89, RGB_RED);
     }
 }
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
@@ -200,7 +199,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
         case KC_CAL:
             if (record->event.pressed) {
-                calc_start();
+                // calc_start();
                 return false;
             }
             break;
