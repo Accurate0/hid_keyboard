@@ -2,8 +2,8 @@ name: qmk
 on:
   push:
     paths:
-      - 'qmk/**'
-      - '.github/**'
+      - "qmk/**"
+      - ".github/**"
 
 concurrency:
   group: environment-${{ github.ref }}-${{ github.workflow }}
@@ -27,11 +27,11 @@ jobs:
         run: sudo qmk/qmk_firmware/util/qmk_install.sh
 
       - name: compile
-        run: cd qmk/qmk_firmware && qmk compile -kb gmmk/pro/ansi -km accurate0 -e NO_SECRETS=yes
+        run: cd qmk/qmk_firmware && qmk compile -kb gmmk/pro/rev1/ansi -km accurate0 -e NO_SECRETS=yes
 
       - name: upload artifacts
         uses: actions/upload-artifact@v2
         with:
           name: qmk-bin
-          path: qmk/qmk_firmware/.build/gmmk_pro_ansi_accurate0.bin
+          path: qmk/qmk_firmware/.build/gmmk_pro_rev1_ansi_accurate0.bin
           if-no-files-found: error
