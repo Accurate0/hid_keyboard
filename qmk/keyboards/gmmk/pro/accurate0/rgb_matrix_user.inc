@@ -19,19 +19,24 @@ typedef HSV (*reactive_splash_f)(HSV hsv, int16_t dx, int16_t dy, uint8_t dist, 
 
 bool REACTIVE_effect_runner(uint8_t start, effect_params_t *params, reactive_splash_f effect_func) {
     RGB_MATRIX_USE_LIMITS(led_min, led_max);
-    if (host_keyboard_led_state().caps_lock) {
-        // 82-89 left side light
-        for (int i = 82; i <= 89; i++) {
-            rgb_matrix_set_color(i, _globals.color.capslock.r, _globals.color.capslock.g,
-                                 _globals.color.capslock.b);
-        }
-    } else {
-        uint8_t count = g_last_hit_tracker.count;
-        // left side light or maybe right if no hid
-        uint8_t finish = _globals.hid.available ? 90 : 97;
+    uint8_t count = g_last_hit_tracker.count;
+
+    uint8_t layer = get_highest_layer(layer_state);
+    if (layer == 0) {
+        rgb_matrix_set_color_all(0, 0, 0);
+    }
+
+    HSV base = {106, 255, 0};
+
+    // left side light or maybe right if no hid
+    if (!_eeprom_config.effect.disabled) {
+
+        uint8_t finish =
+            _globals.hid.available && _globals.hid.available && !_eeprom_config.hid.disabled ? 90
+                                                                                             : 97;
         for (uint8_t i = 82; i <= finish; i++) {
             RGB_MATRIX_TEST_LED_FLAGS();
-            HSV hsv = {9, 150, 0};
+            HSV hsv = base;
             for (uint8_t j = start; j < count; j++) {
                 int16_t dx = g_led_config.point[i].x - g_last_hit_tracker.x[j];
                 int16_t dy = g_led_config.point[i].y - g_last_hit_tracker.y[j];
@@ -45,7 +50,7 @@ bool REACTIVE_effect_runner(uint8_t start, effect_params_t *params, reactive_spl
         }
     }
 
-    if (_globals.hid.available) {
+    if (_globals.hid.available && !_eeprom_config.hid.disabled && !_eeprom_config.effect.disabled) {
         uint32_t total_count = _globals.hid.volume * 20;
         // right side
         for (uint8_t i = 97; i >= 90; i--) {
@@ -59,16 +64,15 @@ bool REACTIVE_effect_runner(uint8_t start, effect_params_t *params, reactive_spl
             } else {
                 value = total_count;
             }
-            HSV hsv = {9, 150, value};
+
+            HSV hsv = base;
+            hsv.v = value;
+
             RGB rgb = rgb_matrix_hsv_to_rgb(_globals.hid.mute ? (HSV){0, 255, value} : hsv);
             rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
             total_count -= value;
         }
     }
-
-    // 72 = space
-    _globals.keepalive.enabled ? rgb_matrix_set_color(72, RGB_RED)
-                               : rgb_matrix_set_color(72, RGB_BLACK);
 
     return led_max < DRIVER_LED_TOTAL;
 }

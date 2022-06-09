@@ -3,8 +3,7 @@
 #include "raw_hid.h"
 #pragma once
 
-enum
-{
+enum {
     KC_EMO = SAFE_RANGE,
     KC_WPM,
     KC_CAL,
@@ -17,11 +16,15 @@ enum
     KC_SC4,
     KC_SC5,
 
+    KC_RSL,
+    KC_NXT,
+    KC_THV,
+    KC_EFF,
+
     NEW_SAFE_RANGE
 };
 
-enum Layers
-{
+enum Layers {
     LY_BASE = 0,
     LY_FUNC
 };
@@ -29,7 +32,6 @@ enum Layers
 typedef struct {
     struct {
         RGB capslock;
-        bool disable_purpose;
     } color;
 
     struct {
@@ -39,17 +41,28 @@ typedef struct {
     } hid;
 
     struct {
-        uint32_t last_press;
-        uint32_t last_encoder;
-    } key;
-
-    struct {
         bool enabled;
         uint32_t last_keepalive;
     } keepalive;
 
 } globals_t;
 
+typedef union {
+    uint32_t raw;
+    struct {
+        struct {
+            bool disabled : 1;
+        } hid;
+
+        struct {
+            bool disabled : 1;
+        } effect;
+    };
+} eeprom_config_t;
+
+// persistent
+extern eeprom_config_t _eeprom_config;
+// runtime
 extern globals_t _globals;
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record);

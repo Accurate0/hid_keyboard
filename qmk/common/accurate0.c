@@ -21,13 +21,10 @@ const qk_ucis_symbol_t ucis_symbol_table[] =
 
 void rgbtimeout_check(bool pressed);
 
-globals_t _globals = {.key =
+globals_t _globals = {.color =
                           {
-                              .last_press = 0,
-                              .last_encoder = 0,
-
+                              .capslock = {RGB_GREEN},
                           },
-                      .color = {.capslock = {RGB_GREEN}, .disable_purpose = false},
                       .hid =
                           {
                               .available = false,
@@ -38,30 +35,24 @@ globals_t _globals = {.key =
                           .enabled = false,
                       }};
 
-#define MINUTES (60 * 1000)
+eeprom_config_t _eeprom_config;
 
-#define RGB_IDLE_TIMEOUT       (5 * MINUTES)
-#define RGB_VOLUME_TIMEOUT     (5 * MINUTES)
 #define KEEPALIVE_TIME_BETWEEN (1 * MINUTES)
+
+void eeconfig_init_user(void) {
+    _eeprom_config.raw = 0;
+    _eeprom_config.hid.disabled = false;
+    _eeprom_config.effect.disabled = false;
+    eeconfig_update_user(_eeprom_config.raw);
+}
 
 void keyboard_post_init_user(void) {
     // setup initial values
-    _globals.key.last_encoder = timer_read32();
-    _globals.key.last_press = timer_read32();
     _globals.keepalive.last_keepalive = timer_read32();
-    _globals.color.disable_purpose = !rgblight_is_enabled();
+    _eeprom_config.raw = eeconfig_read_user();
 }
 
 void matrix_scan_user(void) {
-    // 1000 == 1 second
-    if (rgblight_is_enabled() && timer_elapsed32(_globals.key.last_press) > RGB_IDLE_TIMEOUT) {
-        rgblight_disable_noeeprom();
-    }
-
-    if (_globals.hid.available && timer_elapsed32(_globals.key.last_encoder) > RGB_VOLUME_TIMEOUT) {
-        _globals.hid.available = false;
-    }
-
     if (_globals.keepalive.enabled &&
         timer_elapsed32(_globals.keepalive.last_keepalive) > KEEPALIVE_TIME_BETWEEN)
     {
@@ -104,9 +95,6 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
 }
 
 bool encoder_update_user(uint8_t index, bool clockwise) {
-    _globals.key.last_encoder = timer_read32();
-    rgbtimeout_check(true);
-
     switch (get_highest_layer(layer_state)) {
         case LY_BASE: {
             if (clockwise) {
@@ -139,22 +127,41 @@ void keepalive_toggle(void) {
     _globals.keepalive.enabled = !_globals.keepalive.enabled;
 }
 
-void rgbtimeout_check(bool pressed) {
-    _globals.key.last_press = timer_read32();
-    if (!_globals.color.disable_purpose && !rgblight_is_enabled() && pressed) {
-        rgblight_enable_noeeprom();
+void rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
+    if (host_keyboard_led_state().caps_lock) {
+        rgb_matrix_set_color(15, _globals.color.capslock.r, _globals.color.capslock.b,
+                             _globals.color.capslock.g);
+    } else {
+        rgb_matrix_set_color(5, 0, 0, 0);
+    }
+
+    uint8_t layer = get_highest_layer(layer_state);
+    if (layer > 0) {
+        for (uint8_t row = 0; row < MATRIX_ROWS; ++row) {
+            for (uint8_t col = 0; col < MATRIX_COLS; ++col) {
+                uint8_t index = g_led_config.matrix_co[row][col];
+
+                if (index >= led_min && index <= led_max && index != NO_LED &&
+                    keymap_key_to_keycode(layer, (keypos_t){col, row}) > KC_TRNS)
+                {
+                    rgb_matrix_set_color(index, RGB_PURPLE);
+                }
+            }
+        }
+    }
+
+    // 72 = space
+    if (_globals.keepalive.enabled) {
+        rgb_matrix_set_color(72, RGB_RED);
     }
 }
-
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    rgbtimeout_check(record->event.pressed);
     if (calc_is_in_progress())
         return calc_process_input(keycode, record);
 
     switch (keycode) {
         case KC_MUTE:
             if (record->event.pressed) {
-                _globals.key.last_encoder = timer_read32();
                 return true;
             }
             break;
@@ -205,17 +212,35 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             }
             break;
 
-        case KC_LIG:
+        case KC_RSL:
+            // reset light to default
             if (record->event.pressed) {
-                bool rgb_enabled = rgblight_is_enabled();
-                _globals.color.disable_purpose = !_globals.color.disable_purpose;
-                if (rgb_enabled) {
-                    rgblight_disable();
-                    dprintf("disable\n");
-                } else {
-                    rgblight_enable();
-                    dprintf("enable\n");
-                }
+                rgb_matrix_set_color_all(0, 0, 0);
+                rgb_matrix_mode_noeeprom(RGB_MATRIX_CUSTOM_REACTIVE);
+                return false;
+            }
+            break;
+
+        case KC_NXT:
+            if (record->event.pressed) {
+                rgb_matrix_step_noeeprom();
+                return false;
+            }
+            break;
+
+        case KC_THV:
+            if (record->event.pressed) {
+                _eeprom_config.hid.disabled = !_eeprom_config.hid.disabled;
+                eeconfig_update_user(_eeprom_config.raw);
+                return false;
+            }
+            break;
+
+        case KC_EFF:
+            if (record->event.pressed) {
+                _eeprom_config.effect.disabled = !_eeprom_config.effect.disabled;
+                eeconfig_update_user(_eeprom_config.raw);
+                return false;
             }
             break;
     }
