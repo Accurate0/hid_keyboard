@@ -50,7 +50,7 @@ bool REACTIVE_effect_runner(uint8_t start, effect_params_t *params, reactive_spl
         }
     }
 
-    if (_globals.hid.available && !_eeprom_config.hid.disabled && !_eeprom_config.effect.disabled) {
+    if (_globals.hid.available && !_eeprom_config.hid.disabled) {
         uint32_t total_count = _globals.hid.volume * 20;
         // right side
         for (uint8_t i = 97; i >= 90; i--) {
