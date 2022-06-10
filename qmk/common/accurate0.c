@@ -131,8 +131,6 @@ void rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
     if (host_keyboard_led_state().caps_lock) {
         rgb_matrix_set_color(86, _globals.color.capslock.r, _globals.color.capslock.b,
                              _globals.color.capslock.g);
-    } else {
-        rgb_matrix_set_color(5, 0, 0, 0);
     }
 
     uint8_t layer = get_highest_layer(layer_state);

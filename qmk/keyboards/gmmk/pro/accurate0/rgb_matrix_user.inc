@@ -29,25 +29,22 @@ bool REACTIVE_effect_runner(uint8_t start, effect_params_t *params, reactive_spl
     HSV base = {106, 255, 0};
 
     // left side light or maybe right if no hid
-    if (!_eeprom_config.effect.disabled) {
-
-        uint8_t finish =
-            _globals.hid.available && _globals.hid.available && !_eeprom_config.hid.disabled ? 90
-                                                                                             : 97;
-        for (uint8_t i = 82; i <= finish; i++) {
-            RGB_MATRIX_TEST_LED_FLAGS();
-            HSV hsv = base;
-            for (uint8_t j = start; j < count; j++) {
-                int16_t dx = g_led_config.point[i].x - g_last_hit_tracker.x[j];
-                int16_t dy = g_led_config.point[i].y - g_last_hit_tracker.y[j];
-                uint8_t dist = _globals.hid.available ? 0 : sqrt16(dx * dx + dy * dy);
-                uint16_t tick = scale16by8(g_last_hit_tracker.tick[j], rgb_matrix_config.speed);
-                hsv = effect_func(hsv, dx, dy, dist, tick);
-            }
-            hsv.v = scale8(hsv.v, 255);
-            RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
-            rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
+    uint8_t finish =
+        _globals.hid.available && _globals.hid.available && !_eeprom_config.hid.disabled ? 90 : 97;
+    for (uint8_t i = 82; i <= finish; i++) {
+        RGB_MATRIX_TEST_LED_FLAGS();
+        HSV hsv = base;
+        for (uint8_t j = start; j < count; j++) {
+            int16_t dx = g_led_config.point[i].x - g_last_hit_tracker.x[j];
+            int16_t dy = g_led_config.point[i].y - g_last_hit_tracker.y[j];
+            uint8_t dist = _globals.hid.available ? 0 : sqrt16(dx * dx + dy * dy);
+            uint16_t tick = scale16by8(g_last_hit_tracker.tick[j], rgb_matrix_config.speed);
+            hsv = effect_func(hsv, dx, dy, dist, tick);
         }
+        hsv.v = scale8(hsv.v, 255);
+        RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
+        _eeprom_config.effect.disabled ? rgb_matrix_set_color(i, 0, 0, 0)
+                                       : rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
     }
 
     if (_globals.hid.available && !_eeprom_config.hid.disabled) {
