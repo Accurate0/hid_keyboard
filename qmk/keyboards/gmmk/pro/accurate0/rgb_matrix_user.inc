@@ -79,5 +79,4 @@ bool REACTIVE(effect_params_t *params) {
 }
 
 #endif // RGB_MATRIX_CUSTOM_EFFECT_IMPLS
-
 #define RGB_MATRIX_STARTUP_MODE RGB_MATRIX_CUSTOM_REACTIVE
