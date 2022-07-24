@@ -50,6 +50,7 @@ void keyboard_post_init_user(void) {
     // setup initial values
     _globals.keepalive.last_keepalive = timer_read32();
     _eeprom_config.raw = eeconfig_read_user();
+    rgb_matrix_sethsv_noeeprom(HSV_RED);
 }
 
 void matrix_scan_user(void) {
@@ -133,6 +134,7 @@ void rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
                              _globals.color.capslock.g);
     }
 
+#if 0
     uint8_t layer = get_highest_layer(layer_state);
     if (layer > 0) {
         for (uint8_t row = 0; row < MATRIX_ROWS; ++row) {
@@ -147,7 +149,7 @@ void rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
             }
         }
     }
-
+#endif
     if (_globals.keepalive.enabled) {
         rgb_matrix_set_color(89, RGB_RED);
     }
