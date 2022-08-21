@@ -23,7 +23,7 @@ void rgbtimeout_check(bool pressed);
 
 globals_t _globals = {.color =
                           {
-                              .capslock = {RGB_GREEN},
+                              .capslock = {.r = 240, .g = 108, .b = 166},
                           },
                       .hid =
                           {
@@ -50,7 +50,7 @@ void keyboard_post_init_user(void) {
     // setup initial values
     _globals.keepalive.last_keepalive = timer_read32();
     _eeprom_config.raw = eeconfig_read_user();
-    rgb_matrix_sethsv_noeeprom(HSV_RED);
+    rgb_matrix_sethsv_noeeprom(HSV_CYAN);
 }
 
 void matrix_scan_user(void) {
@@ -130,8 +130,8 @@ void keepalive_toggle(void) {
 
 void rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
     if (host_keyboard_led_state().caps_lock) {
-        rgb_matrix_set_color(86, _globals.color.capslock.r, _globals.color.capslock.b,
-                             _globals.color.capslock.g);
+        rgb_matrix_set_color(86, _globals.color.capslock.r, _globals.color.capslock.g,
+                             _globals.color.capslock.b);
     }
 
     uint8_t layer = get_highest_layer(layer_state);
@@ -165,9 +165,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
         case KC_CAPS:
             if (record->event.pressed && !host_keyboard_led_state().caps_lock) {
+#if 0
                 _globals.color.capslock.r = rand() % 255;
                 _globals.color.capslock.g = rand() % 255;
                 _globals.color.capslock.b = rand() % 255;
+#endif
                 return true;
             }
             break;
